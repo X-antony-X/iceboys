@@ -18,7 +18,7 @@ const TopBar = ({ setMenuOpen, searchOpen, setSearchOpen }) => {
           </button>
 
           {/* اللوجو: يكون على الشمال في الشاشات الكبيرة */}
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-black italic tracking-tighter whitespace-nowrap">
+          <h1 className="text-base xs:text-lg sm:text-2xl md:text-3xl font-black italic tracking-tighter whitespace-nowrap">
             <span className="text-[#004b93]">ICE</span> <span className="text-[#2d2d2d]">BOYS</span>
           </h1>
         </div>

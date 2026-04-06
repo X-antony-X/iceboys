@@ -7,7 +7,7 @@ const HeroSection = () => {
       {/* 1. Background "ICE" Text - حركة براندات عالمية */}
       <div className="absolute inset-0 flex items-center justify-center select-none pointer-events-none">
         <span className="text-[20vw] md:text-[25vw] font-black text-black/[0.03] italic leading-none uppercase tracking-tighter">
-          ICE COLD
+          ICE BOYS
         </span>
       </div>
 
