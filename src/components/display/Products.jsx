@@ -12,7 +12,7 @@ export const products = [
   {
     id: 2,
     name: "Set Black",
-    category: "jacket", // أو 'sets' حسب المنيو عندك
+    category: "pants", // أو 'sets' حسب المنيو عندك
     price: 800.00,
     mainImage: "https://via.placeholder.com/400x500/111827/FFFFFF?text=Set+Black",
     hoverImage: "https://via.placeholder.com/400x500/F3F4F6/111827?text=Details",
@@ -32,7 +32,7 @@ export const products = [
   {
     id: 4,
     name: "Blue Basic Oversize T-Shirt",
-    category: "t-shirt", // زودنا دي عشان الفلترة تشتغل
+    category: "pants", // زودنا دي عشان الفلترة تشتغل
     price: 360.00,
     mainImage: "https://via.placeholder.com/400x500/1E3A8A/FFFFFF?text=Ice+Boys+Blue",
     hoverImage: "https://via.placeholder.com/400x500/F3F4F6/1E3A8A?text=Back+View",
@@ -42,7 +42,7 @@ export const products = [
   {
     id: 5,
     name: "Set Black",
-    category: "sweatpants", // أو 'sets' حسب المنيو عندك
+    category: "pants", // أو 'sets' حسب المنيو عندك
     price: 800.00,
     mainImage: "https://via.placeholder.com/400x500/111827/FFFFFF?text=Set+Black",
     hoverImage: "https://via.placeholder.com/400x500/F3F4F6/111827?text=Details",
