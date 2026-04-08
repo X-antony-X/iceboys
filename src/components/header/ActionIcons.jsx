@@ -1,8 +1,19 @@
 import { useState } from 'react';
 import { FiUser, FiHeart, FiShoppingBag, FiPackage } from 'react-icons/fi';
+import { useCart } from './CartProvider';
+import { useWishlist } from './WishlistProvider';
+import { useNavigate } from 'react-router-dom';
 
-const ActionIcons = () => {
+const ActionIcons = ({ onCartClick }) => {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const { cartItems } = useCart();
+  const { wishlistItems } = useWishlist();
+
+  const totalItems = cartItems.reduce((acc, item) => acc + item.quantity, 0);
+  const totalWishlistItems = wishlistItems.length;
+
   const iconStyle = "text-[#2d2d2d] text-[24px] md:text-2xl lg:text-[30px] cursor-pointer hover:text-[#004b93] transition-colors p-1";
 
   return (
@@ -54,15 +65,27 @@ const ActionIcons = () => {
       </div>
 
       {/* Heart Icon */}
-      <FiHeart className={`${iconStyle} hidden md:block`} />
+      <button 
+        onClick={() => navigate('/wishlist')} // تأكد أن المسار مطابق للـ Route في App.js
+        className="relative focus:outline-none hidden md:block"
+      >
+        <FiHeart className={iconStyle} />
+        {totalWishlistItems > 0 && (
+          <span className="absolute -top-1 -right-1 bg-[#004b93] text-white text-[10px] w-4.5 h-4.5 rounded-full flex items-center justify-center font-bold shadow-sm">
+            {totalWishlistItems}
+          </span>
+        )}
+      </button>
 
       {/* Shopping Bag Icon */}
-      <div className="relative">
+      <button onClick={onCartClick} className="relative focus:outline-none">
         <FiShoppingBag className={iconStyle} />
-        <span className="absolute -top-1 -right-1 bg-[#004b93] text-white text-[10px] lg:text-[12px] w-4.5 h-4.5 lg:w-5.5 lg:h-5.5 rounded-full flex items-center justify-center font-bold shadow-sm">
-          0
-        </span>
-      </div>
+          {totalItems > 0 && (
+            <span className="absolute -top-1 -right-1 bg-[#004b93] text-white text-[10px] lg:text-[11px] min-w-[18px] h-[18px] lg:min-w-[22px] lg:h-[22px] px-1 rounded-full flex items-center justify-center font-bold shadow-sm transition-all animate-in zoom-in">
+              {totalItems}
+            </span>
+          )}
+      </button>
     </div>
   );
 };

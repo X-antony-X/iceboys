@@ -2,7 +2,7 @@ import { FiMenu } from 'react-icons/fi';
 import SearchBar from './SearchBar';
 import ActionIcons from './ActionIcons';
 
-const TopBar = ({ setMenuOpen, searchOpen, setSearchOpen }) => {
+const TopBar = ({ setMenuOpen, searchOpen, setSearchOpen, setCartOpen }) => {
   return (
     <div className="bg-white py-3 px-4 md:px-8 border-b border-gray-100 shadow-sm">
       <div className="flex items-center justify-between w-full max-w-[1400px] mx-auto gap-4">
@@ -31,7 +31,7 @@ const TopBar = ({ setMenuOpen, searchOpen, setSearchOpen }) => {
 
         {/* 3. الجانب الأيمن: الأيقونات */}
         <div className="flex justify-end items-center">
-          <ActionIcons />
+          <ActionIcons onCartClick={() => setCartOpen(true)} />
         </div>
 
       </div>
