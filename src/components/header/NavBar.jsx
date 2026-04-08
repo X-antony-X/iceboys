@@ -49,9 +49,9 @@ const NavBar = ({ isMenuOpen, setIsMenuOpen }) => {
         { name: "Best Seller", items: [] }
       ]
     },
-    { title: "ABOUT ICE BOYS", hasSub: false },
-    { title: "SHIPPING POLICY", hasSub: false },
-    { title: "CONTACT US", hasSub: false },
+    { title: "ABOUT ICE BOYS", hasSub: false, path: "/about" },
+    { title: "SHIPPING POLICY", hasSub: false, path: "/shipping" },
+    { title: "CONTACT US", hasSub: false, path: "/contact" },
   ];
 
 return (
@@ -76,7 +76,7 @@ return (
               </button>
             ) : (
               <Link 
-                to={item.link} 
+                to={item.path} 
                 className="text-[13px] font-bold tracking-widest text-[#2d2d2d] hover:text-[#004b93]"
                 onClick={() => setIsPinned(false)} // لو راح لصفحة تانية فك التثبيت
               >

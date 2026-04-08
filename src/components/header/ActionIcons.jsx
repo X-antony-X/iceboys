@@ -3,6 +3,8 @@ import { FiUser, FiHeart, FiShoppingBag, FiPackage } from 'react-icons/fi';
 import { useCart } from './CartProvider';
 import { useWishlist } from './WishlistProvider';
 import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import SignInPage from '../pages/SignInPage';
 
 const ActionIcons = ({ onCartClick }) => {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
