@@ -5,17 +5,20 @@ import './index.css'
 import App from './App.jsx'
 import { CartProvider } from './components/header/CartProvider.jsx';
 import { WishlistProvider } from './components/header/WishlistProvider.jsx'
+import { AuthProvider } from './components/pages/AuthProvider.jsx';
 
 const queryClient = new QueryClient()
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <CartProvider>
-      <WishlistProvider>
-        <QueryClientProvider client={queryClient}>
-          <App />
-        </QueryClientProvider>
-      </WishlistProvider>
-    </CartProvider>
+    <AuthProvider>
+      <CartProvider>
+        <WishlistProvider>
+          <QueryClientProvider client={queryClient}>
+            <App />
+          </QueryClientProvider>
+        </WishlistProvider>
+      </CartProvider>
+    </AuthProvider>
   </StrictMode>,
 )

@@ -4,7 +4,7 @@ import ActionIcons from './ActionIcons';
 
 const TopBar = ({ setMenuOpen, searchOpen, setSearchOpen, setCartOpen }) => {
   return (
-    <div className="bg-white py-3 px-4 md:px-8 border-b border-gray-100 shadow-sm">
+    <div className="bg-transparent py-3 px-4 md:px-8 border-b border-gray-100">
       <div className="flex items-center justify-between w-full max-w-[1400px] mx-auto gap-4">
         
         {/* 1. الجانب الأيسر: المنيو (موبايل فقط) + اللوجو */}

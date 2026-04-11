@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom'; // استيراد Portal لإخراج المكون خارج الهيدر
 import { X, Minus, Plus, ShoppingBag, Trash2 } from 'lucide-react';
 import { useCart } from '../header/CartProvider'; 
 
@@ -9,6 +10,7 @@ export default function CartSidebar({ isOpen, onClose }) {
   const amountAwayFromFreeShipping = Math.max(0, FREE_SHIPPING_THRESHOLD - subtotal);
   const progressPercentage = Math.min(100, (subtotal / FREE_SHIPPING_THRESHOLD) * 100);
 
+  // منع السكرول في الصفحة الخلفية عند فتح السلة
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -20,11 +22,17 @@ export default function CartSidebar({ isOpen, onClose }) {
 
   if (!isOpen) return null;
 
-  return (
+  // استخدام createPortal لضمان ظهور السلة فوق كل شيء في الموقع
+  return createPortal(
     <>
-      <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm z-50 transition-opacity" onClick={onClose} />
+      {/* 1. الخلفية المظلمة (Overlay) - تم رفع الـ z-index لـ 9998 */}
+      <div 
+        className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity z-[9998]" 
+        onClick={onClose} 
+      />
 
-      <div className={`fixed top-0 right-0 h-full w-full sm:w-[400px] bg-white shadow-2xl z-50 flex flex-col transform transition-transform duration-300 ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+      {/* 2. جسم السلة (Sidebar) - تم رفع الـ z-index لـ 9999 */}
+      <div className={`fixed top-0 right-0 h-full w-full sm:w-[400px] bg-white shadow-2xl flex flex-col transform transition-transform duration-300 z-[9999] ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
         
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-100">
@@ -90,7 +98,7 @@ export default function CartSidebar({ isOpen, onClose }) {
                 <span className="font-black text-[#2d2d2d]">Total:</span>
                 <span className="font-black text-[#004b93]">LE {subtotal.toFixed(2)}</span>
               </div>
-              <button className="w-full bg-[#2d2d2d] hover:bg-black text-white py-4 text-[13px] font-black tracking-widest uppercase rounded-sm flex items-center justify-center gap-2">
+              <button className="w-full bg-[#2d2d2d] hover:bg-black text-white py-4 text-[13px] font-black tracking-widest uppercase rounded-sm flex items-center justify-center gap-2 transition-all">
                 <ShoppingBag size={16} /> Checkout
               </button>
             </div>
@@ -102,6 +110,7 @@ export default function CartSidebar({ isOpen, onClose }) {
           </div>
         )}
       </div>
-    </>
+    </>,
+    document.body // إرسال الكود لنهاية الـ Body
   );
 }
