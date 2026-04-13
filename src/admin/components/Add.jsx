@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, Trash2, Save, X, Loader2 } from 'lucide-react';
-import { useMutation, useQuery } from '@tanstack/react-query'; // أضفنا useQuery
+import { useMutation, useQuery } from '@tanstack/react-query'; 
 import { supabase } from '../../services/supabase';
 import { Link } from 'react-router-dom';
 
@@ -10,7 +10,8 @@ const Add = () => {
 
     const [product, setProduct] = useState({
         name: '',
-        collection: '',
+        collection: '', // الخانة الأصلية
+        productGroup: '', // الخانة الجديدة التي تطلبها
         category: '',
         price: '',
         description: '',
@@ -19,7 +20,7 @@ const Add = () => {
     const [sizes, setSizes] = useState([{ size: '', quantity: '' }]);
 
     // ==========================================
-    // 1. جلب البيانات من جدول header_categories
+    // 1. جلب البيانات من جدول header_categories (القديم)
     // ==========================================
     const { data: dbCategories, isLoading: isLoadingCats } = useQuery({
         queryKey: ['header_categories'],
@@ -32,10 +33,23 @@ const Add = () => {
         }
     });
 
+    // ==========================================
+    // 2. جلب البيانات من جدول collections (الجديد)
+    // ==========================================
+    const { data: dbCollections, isLoading: isLoadingColls } = useQuery({
+        queryKey: ['collections_list'],
+        queryFn: async () => {
+            const { data, error } = await supabase
+                .from('collections')
+                .select('*');
+            if (error) throw error;
+            return data;
+        }
+    });
+
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         if (name === 'collection') {
-            // عند تغيير المجموعة، نصفر الفئة والمقاسات
             setProduct({ ...product, collection: value, category: '' });
             setSizes([{ size: '', quantity: '' }]);
         } else {
@@ -43,7 +57,6 @@ const Add = () => {
         }
     };
 
-    // الحصول على الفئات الفرعية للمجموعة المختارة حالياً
     const currentSubItems = dbCategories?.find(cat => cat.main_name === product.collection)?.sub_items || [];
 
     const handleSizeChange = (index, field, value) => {
@@ -80,9 +93,6 @@ const Add = () => {
         return ['S', 'M', 'L', 'XL'];
     };
 
-    // ==========================================
-    // 🚀 Mutation لرفع البيانات (كما هي مع تعديل بسيط)
-    // ==========================================
     const addProductMutation = useMutation({
         mutationFn: async (finalData) => {
             const uploadedImageUrls = await Promise.all(
@@ -90,17 +100,9 @@ const Add = () => {
                     const fileExt = file.name.split('.').pop();
                     const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
                     const filePath = `products/${fileName}`;
-
-                    const { error: uploadError } = await supabase.storage
-                        .from('product-images')
-                        .upload(filePath, file);
-
+                    const { error: uploadError } = await supabase.storage.from('product-images').upload(filePath, file);
                     if (uploadError) throw new Error(`Upload failed: ${uploadError.message}`);
-
-                    const { data } = supabase.storage
-                        .from('product-images')
-                        .getPublicUrl(filePath);
-
+                    const { data } = supabase.storage.from('product-images').getPublicUrl(filePath);
                     return data.publicUrl;
                 })
             );
@@ -110,6 +112,7 @@ const Add = () => {
                 .insert([{
                     name: finalData.name,
                     collection: finalData.collection,
+                    collection_id: finalData.productGroup || null, // نرسل الـ ID للعمود الصحيح
                     category: finalData.category,
                     price: parseFloat(finalData.price),
                     description: finalData.description,
@@ -123,7 +126,7 @@ const Add = () => {
         },
         onSuccess: () => {
             alert('Product added successfully! 🎉');
-            setProduct({ name: '', collection: '', category: '', price: '', description: '' });
+            setProduct({ name: '', collection: '', productGroup: '', category: '', price: '', description: '' });
             setSizes([{ size: '', quantity: '' }]);
             setImages([]);
             setPreviews([]);
@@ -136,7 +139,6 @@ const Add = () => {
         if (images.length === 0) return alert('Please upload at least one image!');
         const filteredSizes = sizes.filter(s => s.size !== '' && s.quantity !== '');
         if (filteredSizes.length === 0) return alert('Please add at least one valid size.');
-
         addProductMutation.mutate({ ...product, sizes: filteredSizes });
     };
 
@@ -148,13 +150,11 @@ const Add = () => {
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-6">
-                    {/* Product Name */}
                     <div>
                         <label className="block text-[13px] font-bold text-gray-700 mb-2 uppercase">Product Name</label>
                         <input type="text" name="name" value={product.name} onChange={handleInputChange} required placeholder="e.g. Navy Blue Over-sized Hoodie" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#004b93]" />
                     </div>
 
-                    {/* Image Upload Placeholder... (نفس كودك القديم) */}
                     <div className="space-y-4">
                         <label className="block text-[13px] font-bold text-gray-700 uppercase">Product Images</label>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -174,8 +174,33 @@ const Add = () => {
                         </div>
                     </div>
 
-                    {/* 2. تعديل قائمة Collection و Category لتكون ديناميكية */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* القسم الخاص بالاختيارات الثلاثة */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {/* 1. الخانة الجديدة (تختار من جدول collections) */}
+                        <div>
+                            <label className="block text-[13px] font-bold text-gray-700 mb-2 uppercase">
+                                Product Group (From Collections)
+                            </label>
+                            <select 
+                                name="productGroup" 
+                                value={product.productGroup} 
+                                onChange={handleInputChange} 
+                                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#004b93]"
+                            >
+                                <option value="" disabled>{isLoadingColls ? 'Loading...' : 'Select Group'}</option>
+                                
+                                {dbCollections?.map((coll) => (
+                                    /* الـ value هنا هي الـ ID (وده اللي هيروح للـ Database عشان ميعملش Error)
+                                    لكن اللي بين العلامتين هو الـ Name (وده اللي هيظهر للمستخدم في القائمة)
+                                    */
+                                    <option key={coll.id} value={coll.id}>
+                                        {coll.name || coll.main_name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* 2. خانة Collection الأصلية */}
                         <div>
                             <label className="block text-[13px] font-bold text-gray-700 mb-2 uppercase">Collection</label>
                             <select 
@@ -193,6 +218,8 @@ const Add = () => {
                                 ))}
                             </select>
                         </div>
+
+                        {/* 3. خانة Category الأصلية */}
                         <div>
                             <label className="block text-[13px] font-bold text-gray-700 mb-2 uppercase">Category</label>
                             <select 
@@ -205,15 +232,12 @@ const Add = () => {
                             >
                                 <option value="" disabled>Select Category</option>
                                 {currentSubItems.map((sub) => (
-                                    <option key={sub} value={sub}>
-                                        {sub}
-                                    </option>
+                                    <option key={sub} value={sub}>{sub}</option>
                                 ))}
                             </select>
                         </div>
                     </div>
 
-                    {/* السعر والمقاسات والوصف... (نفس كودك القديم) */}
                     <div>
                         <label className="block text-[13px] font-bold text-gray-700 mb-2 uppercase">Price (LE)</label>
                         <input type="number" name="price" value={product.price} onChange={handleInputChange} required min="0" step="0.01" className="w-full md:w-1/2 px-4 py-3 bg-gray-50 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#004b93]" />

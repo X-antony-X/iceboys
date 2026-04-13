@@ -1,6 +1,7 @@
 import { FiMenu } from 'react-icons/fi';
 import SearchBar from './SearchBar';
 import ActionIcons from './ActionIcons';
+import { Link } from 'react-router-dom';
 
 const TopBar = ({ setMenuOpen, searchOpen, setSearchOpen, setCartOpen }) => {
   return (
@@ -18,9 +19,9 @@ const TopBar = ({ setMenuOpen, searchOpen, setSearchOpen, setCartOpen }) => {
           </button>
 
           {/* اللوجو: يكون على الشمال في الشاشات الكبيرة */}
-          <h1 className="text-base xs:text-lg sm:text-2xl md:text-3xl font-black italic tracking-tighter whitespace-nowrap">
+          <Link to="/" className="text-base xs:text-lg sm:text-2xl md:text-3xl font-black italic tracking-tighter whitespace-nowrap">
             <span className="text-[#004b93]">ICE</span> <span className="text-[#2d2d2d]">BOYS</span>
-          </h1>
+          </Link>
         </div>
 
         {/* 2. المنتصف: الـ Search Bar (يأخذ أكبر مساحة في الشاشات الكبيرة) */}

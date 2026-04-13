@@ -33,13 +33,14 @@ const NavBar = ({ isMenuOpen, setIsMenuOpen }) => {
   const menuData = [
     { title: "NEW ARRIVALS", hasSub: false, path: "/new-arrivals" },
     {
-      title: "COLLECTIONS",
+      title: "SHOP",
       hasSub: true,
       subCategories: dbCategories?.map(cat => ({
         name: cat.main_name,
         items: cat.sub_items
       })) || [] 
     },
+    { title: "COLLECTIONS", hasSub: false, path: "/collections" },
     { title: "ABOUT ICE BOYS", hasSub: false, path: "/about" },
     { title: "SHIPPING POLICY", hasSub: false, path: "/shipping" },
     { title: "CONTACT US", hasSub: false, path: "/contact" },

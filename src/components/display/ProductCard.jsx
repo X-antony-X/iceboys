@@ -5,6 +5,7 @@ import { useWishlist } from '../header/WishlistProvider';
 import { supabase } from '../../services/supabase';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 
 // 1. دالة جلب البيانات من Supabase
 const fetchProducts = async () => {
@@ -52,13 +53,58 @@ export function ProductList({ viewMode }) {
 export default function ProductCard({ product, viewMode }) {
   const isList = viewMode === 'list';
   const { addToCart } = useCart();
-  const { addToWishlist, isInWishlist } = useWishlist();
+  const navigate = useNavigate();
+
+  const goToDetails = () => {
+    navigate(`/product/${product.id}`);
+  };
+  
+  // 1. الترتيب الصح: نادي الـ Hooks الأول
+  const { isInWishlist, addToWishlistLocal, removeFromWishlistLocal } = useWishlist(); 
   const isFavorite = isInWishlist(product.id);
 
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [selectedSize, setSelectedSize] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+
+  // 2. دالة الـ Toggle (إضافة ومسح)
+  const handleFavoriteToggle = async (e) => {
+    e.preventDefault(); // عشان لو الكارت جواه لينك ميفتحش
+    
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      alert("Please sign in to save favorites!");
+      return;
+    }
+
+    if (isFavorite) {
+      // --- حالة المسح ---
+      const { error } = await supabase
+        .from('favorites')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('product_id', product.id);
+
+      if (!error) {
+        if(removeFromWishlistLocal) removeFromWishlistLocal(product.id);
+        console.log("Removed from DB");
+      }
+    } else {
+      // --- حالة الإضافة ---
+      const { error } = await supabase
+        .from('favorites')
+        .insert([{ user_id: user.id, product_id: product.id }]);
+
+      if (!error) {
+        if(addToWishlistLocal) addToWishlistLocal(product);
+        console.log("Added to DB");
+      } else if (error.code === '23505') {
+        console.log("Already there");
+      }
+    }
+  };
 
   // إعدادات الـ Swipe للموبايل
   const [touchStart, setTouchStart] = useState(null);
@@ -120,6 +166,7 @@ export default function ProductCard({ product, viewMode }) {
       {/* حاوية الصورة والتحكمات */}
       <div className="relative w-full">
         <div 
+          onClick={goToDetails}
           className={`relative overflow-hidden bg-[#f8f9fa] rounded-sm ${isList ? 'w-full sm:w-1/3 max-w-[280px]' : 'w-full'} aspect-[4/5]`}
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}
@@ -181,8 +228,10 @@ export default function ProductCard({ product, viewMode }) {
                 {isFavorite ? 'Remove from Wishlist' : 'Add To Wishlist'}
               </span>
               <button 
-                onClick={() => addToWishlist(product)}
-                className={`w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center transition-all duration-300 rounded-full ${isFavorite ? 'bg-[#004b93] text-white shadow-md' : 'bg-white/80 text-gray-600 hover:bg-[#004b93] hover:text-white shadow-sm'}`}
+                onClick={handleFavoriteToggle} // اتغيرت هنا
+                className={`w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center transition-all duration-300 rounded-full ${
+                  isFavorite ? 'bg-[#004b93] text-white shadow-md' : 'bg-white/80 text-gray-600 hover:bg-[#004b93] hover:text-white shadow-sm'
+                }`}
               >
                 <Heart size={18} fill={isFavorite ? "currentColor" : "none"} strokeWidth={2.5} />
               </button>
@@ -192,7 +241,7 @@ export default function ProductCard({ product, viewMode }) {
               <span className="absolute right-full mr-3 text-[10px] font-black uppercase tracking-widest text-white bg-[#004b93] py-2 px-4 rounded-full shadow-lg opacity-0 invisible group-hover/tooltip:opacity-100 group-hover/tooltip:visible transition-all duration-300 whitespace-nowrap z-50">
                 Quick View
               </span>
-              <button className="w-8 h-8 sm:w-9 sm:h-9 bg-white/80 shadow-sm flex items-center justify-center text-gray-600 hover:bg-[#004b93] hover:text-white rounded-full transition-all duration-300">
+              <button onClick={(e) => { e.stopPropagation(); goToDetails();}} className="w-8 h-8 sm:w-9 sm:h-9 bg-white/80 shadow-sm flex items-center justify-center text-gray-600 hover:bg-[#004b93] hover:text-white rounded-full transition-all duration-300">
                 <Eye size={18} strokeWidth={2.5} />
               </button>
             </div>
@@ -228,7 +277,7 @@ export default function ProductCard({ product, viewMode }) {
       <div className={`mt-3 w-full px-1 flex flex-col flex-grow ${isList ? 'flex-1 text-center sm:text-left' : 'text-center'}`}>
         
         <div>
-          <h3 className="text-[#2d2d2d] text-[13px] md:text-[15px] font-bold uppercase tracking-tight lg:group-hover:text-[#004b93] transition-colors line-clamp-1">
+          <h3 onClick={goToDetails} className="text-[#2d2d2d] text-[13px] md:text-[15px] font-bold uppercase tracking-tight lg:group-hover:text-[#004b93] transition-colors line-clamp-1">
             {product.name}
           </h3>
           

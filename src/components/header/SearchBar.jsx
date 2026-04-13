@@ -5,7 +5,7 @@ const SearchBar = ({ isOpen, setIsOpen }) => {
     <>
       {/* Search Icon for Mobile Trigger */}
         <button onClick={() => setIsOpen(true)} className="md:hidden text-[#2d2d2d] text-2xl p-1">
-        <FiSearch />
+          <FiSearch />
         </button>
 
       {/* Desktop Static Search */}

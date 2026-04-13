@@ -12,10 +12,16 @@ import AboutIceBoys from './components/pages/AboutIceBoys';
 import ShippingPolicy from './components/pages/ShippingPolicy';
 import AccountPage from './components/pages/AccountPage';
 import NotFoundPage from './components/pages/NotFoundPage';
+import ProductDetails from './components/pages/ProductDetails';
+import Collections from './components/pages/Colletions';
+import CollectionProducts from './components/pages/CollectionProducts';
+import Checkout from './components/pages/Checkout';
 
 // admin
 import Add from './admin/components/Add'
 import CategoryManager from './admin/components/CategoryManager';
+import AddCollection from './admin/components/AddCollection';
+import ManageProducts from './admin/components/ManageProducts';
 
 function App() {
   return (
@@ -32,10 +38,17 @@ function App() {
         <Route path="/about" element={<AboutIceBoys />} />
         <Route path="/shipping" element={<ShippingPolicy />} />
         <Route path="/account" element={<AccountPage />} />
+        <Route path="/collections" element={<Collections />} />
+        <Route path="/collections/:id" element={<CollectionProducts />} />
+        <Route path="/product/:id" element={<ProductDetails />} />
+        <Route path="/checkout" element={<Checkout />} />
         <Route path="*" element={<NotFoundPage />} />
         {/* admin */}
         <Route path="/add" element={<Add />} />
         <Route path="/categories" element={<CategoryManager />} />
+        <Route path="/add-collection" element={<AddCollection />} />
+        <Route path="/manage-products" element={<ManageProducts />} />
+
       </Routes>
       <Footer />
     </Router>

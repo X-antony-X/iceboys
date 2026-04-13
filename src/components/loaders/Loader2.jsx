@@ -27,7 +27,7 @@ const StyledWrapper = styled.div`
   .container {
     position: relative;
     width: 100%;
-    height: 100px; /* تحديد ارتفاع مناسب لمنع الـ scroll */
+    height: 100px;
     display: flex;
     justify-content: center;
     align-items: center;
