@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
-import { FiX, FiChevronRight, FiChevronDown } from 'react-icons/fi';
+import { FiX, FiChevronDown } from 'react-icons/fi';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../services/supabase';
 
@@ -9,12 +10,20 @@ const NavBar = ({ isMenuOpen, setIsMenuOpen }) => {
   const [activeDesktopMenu, setActiveDesktopMenu] = useState(null);
   const [isPinned, setIsPinned] = useState(false);
 
-  // --- 1. دالة توليد الرابط الديناميكي ---
+  // --- 1. منع السكرول في الصفحة الخلفية عند فتح المنيو ---
+  useEffect(() => {
+    if (isMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => { document.body.style.overflow = 'unset'; };
+  }, [isMenuOpen]);
+
+  // --- 2. دالة توليد الرابط الديناميكي ---
   const createProductLink = (collectionName, categoryName) => {
     const col = collectionName.toLowerCase().replace(' collection', '').trim().replace(/\s+/g, '-');
     const cat = categoryName.toLowerCase().trim().replace(/\s+/g, '-');
-    
-    // ✅ غيرنا "shop" لـ "products" عشان تطابق الـ Route اللي عندك في App.js
     return `/products/${col}-${cat}`; 
   };
 
@@ -62,7 +71,7 @@ const NavBar = ({ isMenuOpen, setIsMenuOpen }) => {
   return (
     <>
       {/* --- Desktop NavBar --- */}
-      <nav className="hidden md:flex bg-white border-b border-gray-100 justify-center gap-8 py-0 relative z-[70] w-full">
+      <nav className="hidden md:flex bg-white border-b border-gray-100 justify-center gap-4 lg:gap-10 py-0 relative z-[70] w-full mx-auto">
         {menuData.map((item) => (
           <div 
             key={item.title} 
@@ -74,7 +83,7 @@ const NavBar = ({ isMenuOpen, setIsMenuOpen }) => {
               {item.hasSub ? (
                 <button 
                   onClick={() => handleToggleClick(item.title)}
-                  className={`text-[12px] font-extrabold tracking-[0.15em] transition-all duration-300 flex items-center gap-1.5 px-2 relative h-full
+                  className={`text-[11px] lg:text-[12px] font-extrabold tracking-[0.15em] transition-all duration-300 flex items-center gap-1.5 px-2 relative h-full
                     ${activeDesktopMenu === item.title ? 'text-[#004b93]' : 'text-[#2d2d2d] hover:text-[#004b93]'}`}
                 >
                   {item.title} 
@@ -84,7 +93,7 @@ const NavBar = ({ isMenuOpen, setIsMenuOpen }) => {
               ) : (
                 <Link 
                   to={item.path} 
-                  className="text-[12px] font-extrabold tracking-[0.15em] text-[#2d2d2d] hover:text-[#004b93] transition-all px-2 relative h-full flex items-center group"
+                  className="text-[11px] lg:text-[12px] font-extrabold tracking-[0.15em] text-[#2d2d2d] hover:text-[#004b93] transition-all px-2 relative h-full flex items-center group"
                   onClick={() => setIsPinned(false)}
                 >
                   {item.title}
@@ -109,7 +118,6 @@ const NavBar = ({ isMenuOpen, setIsMenuOpen }) => {
                           {sub.items.map((subItem) => (
                             <li key={subItem}>
                               <Link 
-                                // ✅ هنا استخدمنا الدالة الديناميكية للرابط
                                 to={createProductLink(sub.name, subItem)} 
                                 onClick={() => { setActiveDesktopMenu(null); setIsPinned(false); }} 
                                 className="text-gray-500 hover:text-black text-[13px] font-bold transition-all hover:translate-x-1 inline-block"
@@ -140,43 +148,92 @@ const NavBar = ({ isMenuOpen, setIsMenuOpen }) => {
       </nav>
 
       {/* --- Mobile Sidebar --- */}
-      {isMenuOpen && (
-        <div className="fixed inset-0 z-[100] flex">
-          <div className="w-[85%] max-w-[320px] bg-white h-full overflow-y-auto shadow-2xl animate-slideRight">
-            <div className="flex items-center justify-between p-6 border-b">
-              <Link to="/" onClick={() => setIsMenuOpen(false)} className="text-[#004b93] font-black tracking-tighter text-xl">ICE BOYS</Link>
-              <button onClick={() => setIsMenuOpen(false)} className="text-2xl text-gray-400"><FiX /></button>
+      {isMenuOpen && createPortal(
+        <div className="fixed inset-0 z-[9998] flex overflow-hidden font-sans">
+          {/* Overlay */}
+          <div 
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm transition-opacity duration-300 z-[9998]"
+            onClick={() => setIsMenuOpen(false)}
+          />
+
+          {/* Sidebar Content */}
+          <div 
+            className="relative w-[90%] max-w-[400px] bg-white h-full shadow-2xl flex flex-col animate-slideInLeft z-[9999]"
+          >
+            {/* Header المماثل للصورة (زر X داكن وشعار أزرق) */}
+            <div className="flex h-[60px] border-b border-gray-200">
+              <div className="flex-1 flex items-center justify-center border-r border-gray-200 bg-white">
+                <Link 
+                  to="/" 
+                  onClick={() => setIsMenuOpen(false)} 
+                  className="text-[#004b93] font-black tracking-[0.15em] text-xl"
+                >
+                  ICE BOYS
+                </Link>
+              </div>
+              <button 
+                type="button"
+                onClick={() => setIsMenuOpen(false)} 
+                className="w-[60px] flex items-center justify-center bg-[#2d2d2d] text-white hover:bg-black transition-colors"
+              >
+                <FiX size={28} />
+              </button>
             </div>
             
-            <div className="flex flex-col py-2">
+            {/* Links Section (Blocky Style) */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-white">
               {menuData.map((item, index) => (
-                <div key={item.title} className="border-b border-gray-50 last:border-0">
+                <div key={item.title} className="flex flex-col">
+                  {/* زر القائمة الرئيسي */}
                   <div 
-                    className="flex items-center justify-between p-5" 
-                    onClick={() => item.hasSub && setActiveAccordion(activeAccordion === index ? null : index)}
+                    className={`flex items-center justify-between p-5 cursor-pointer rounded-sm transition-all duration-300 ${
+                      activeAccordion === index 
+                        ? 'bg-[#004b93] text-white shadow-md' 
+                        : 'bg-gray-100 text-[#2d2d2d] hover:bg-gray-200'
+                    }`}
+                    onClick={() => {
+                      if (item.hasSub) {
+                        setActiveAccordion(activeAccordion === index ? null : index);
+                      } else {
+                        setIsMenuOpen(false);
+                      }
+                    }}
                   >
-                    <span className={`text-[13px] font-black tracking-widest ${activeAccordion === index ? 'text-[#004b93]' : 'text-gray-800'}`}>
-                      {item.title}
-                    </span>
+                    {item.hasSub ? (
+                      <span className="text-[14px] font-black uppercase tracking-widest">
+                        {item.title}
+                      </span>
+                    ) : (
+                      <Link to={item.path} onClick={() => setIsMenuOpen(false)} className="text-[14px] font-black uppercase tracking-widest w-full">
+                        {item.title}
+                      </Link>
+                    )}
+                    
                     {item.hasSub && (
-                      <FiChevronRight className={`transition-transform duration-300 ${activeAccordion === index ? 'rotate-90 text-[#004b93]' : 'text-gray-300'}`} />
+                      <FiChevronDown 
+                        className={`transition-transform duration-300 ${activeAccordion === index ? 'rotate-180 text-white' : 'text-gray-500'}`} 
+                        size={20} 
+                      />
                     )}
                   </div>
                   
+                  {/* القائمة المنسدلة (Submenu) */}
                   {item.hasSub && activeAccordion === index && (
-                    <div className="bg-gray-50/50 px-5 pb-5 space-y-6 pt-2 animate-fadeIn">
+                    <div className="bg-white border border-gray-100 mt-2 rounded-sm shadow-inner p-5 space-y-6 animate-fadeIn">
                       {item.subCategories.map((sub) => (
                         <div key={sub.name} className="flex flex-col">
-                          <div className="font-black text-[11px] text-[#004b93] uppercase tracking-widest mb-3">{sub.name}</div>
-                          <ul className="grid grid-cols-1 gap-3 pl-3 border-l-2 border-gray-200">
+                          <h4 className="font-black text-[12px] text-[#004b93] uppercase tracking-widest mb-3 border-b border-gray-100 pb-2">
+                            {sub.name}
+                          </h4>
+                          <ul className="space-y-3">
                             {sub.items.map(subItem => (
                               <li key={subItem}>
                                 <Link 
-                                  // ✅ تعديل رابط الموبايل أيضاً ليكون ديناميكي
                                   to={createProductLink(sub.name, subItem)} 
                                   onClick={() => setIsMenuOpen(false)}
-                                  className="text-[13px] text-gray-500 font-bold"
+                                  className="text-[13px] text-gray-600 font-bold hover:text-[#004b93] flex items-center gap-2 transition-colors"
                                 >
+                                  <span className="w-1.5 h-1.5 rounded-full bg-gray-300 block"></span>
                                   {subItem}
                                 </Link>
                               </li>
@@ -188,10 +245,18 @@ const NavBar = ({ isMenuOpen, setIsMenuOpen }) => {
                   )}
                 </div>
               ))}
+
+              {/* Promo Banner (لافتة ترويجية لتعزيز شكل المتاجر العالمية) */}
+              <div className="mt-8 border-2 border-[#004b93] p-6 text-center bg-[#f8fbff] rounded-sm">
+                <h4 className="font-black text-[#2d2d2d] text-[16px] tracking-widest uppercase">Sale up to</h4>
+                <span className="block text-[#004b93] font-black text-3xl my-2">60% OFF</span>
+                <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">On Selected Items</p>
+              </div>
             </div>
+
           </div>
-          <div className="flex-1 bg-black/60 backdrop-blur-sm" onClick={() => setIsMenuOpen(false)}></div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

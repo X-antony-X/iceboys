@@ -22,6 +22,7 @@ import Add from './admin/components/Add'
 import CategoryManager from './admin/components/CategoryManager';
 import AddCollection from './admin/components/AddCollection';
 import ManageProducts from './admin/components/ManageProducts';
+import AdminHeroForm from './admin/components/AdminHeroForm';
 
 function App() {
   return (
@@ -48,6 +49,7 @@ function App() {
         <Route path="/categories" element={<CategoryManager />} />
         <Route path="/add-collection" element={<AddCollection />} />
         <Route path="/manage-products" element={<ManageProducts />} />
+        <Route path="/admin-hero" element={<AdminHeroForm />} />
 
       </Routes>
       <Footer />

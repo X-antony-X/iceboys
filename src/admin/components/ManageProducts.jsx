@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../services/supabase';
-import { Edit, Trash2, X, Plus, Loader2, AlertCircle, Save, ImagePlus } from 'lucide-react';
+import { Edit, Trash2, X, Plus, Loader2, AlertCircle, Save, ImagePlus, Percent } from 'lucide-react';
 
 // ---------------------------------------------------------
 // 1. دوال التعامل مع قاعدة البيانات (Supabase API Functions)
@@ -58,18 +58,23 @@ const deleteProduct = async (product) => {
   return product.id;
 };
 
-  const updateProduct = async (updatedData) => {
-    const { id, main_category, ...dataToUpdate } = updatedData; 
-    
-    const { data, error } = await supabase
-      .from('products')
-      .update(dataToUpdate)
-      .eq('id', id)
-      .select();
+const updateProduct = async (updatedData) => {
+  const { id, main_category, ...dataToUpdate } = updatedData; 
+  
+  // التأكد من أن السعر الفارغ يتم تحويله لـ null في الداتابيز عشان ميعملش خطأ
+  if (dataToUpdate.sale_price === '') {
+    dataToUpdate.sale_price = null;
+  }
 
-    if (error) throw new Error(error.message);
-    return data;
-  };
+  const { data, error } = await supabase
+    .from('products')
+    .update(dataToUpdate)
+    .eq('id', id)
+    .select();
+
+  if (error) throw new Error(error.message);
+  return data;
+};
 
 // ---------------------------------------------------------
 // 2. المكون الرئيسي: صفحة إدارة المنتجات
@@ -78,6 +83,7 @@ const deleteProduct = async (product) => {
 export default function ManageProducts() {
   const queryClient = useQueryClient();
   const [editingProduct, setEditingProduct] = useState(null);
+  const [offerProduct, setOfferProduct] = useState(null); // حالة جديدة لنافذة العروض
 
   const { data: products, isLoading, isError, error } = useQuery({
     queryKey: ['admin-products'],
@@ -158,7 +164,16 @@ export default function ManageProducts() {
                     </td>
                     <td className="p-4 font-bold text-[#2d2d2d]">{product.name}</td>
                     <td className="p-4 text-sm text-gray-600">{product.category}</td>
-                    <td className="p-4 font-black text-[#004b93]">LE {product.price}</td>
+                    <td className="p-4 font-black">
+                      {product.sale_price ? (
+                        <div className="flex flex-col">
+                          <span className="text-green-600">LE {product.sale_price}</span>
+                          <span className="text-gray-400 line-through text-[11px]">LE {product.price}</span>
+                        </div>
+                      ) : (
+                        <span className="text-[#004b93]">LE {product.price}</span>
+                      )}
+                    </td>
                     <td className="p-4 text-sm font-bold text-gray-600">
                       {totalStock > 0 ? (
                         <span className="text-green-600 bg-green-50 px-2 py-1 rounded-sm">{totalStock} in stock</span>
@@ -168,6 +183,15 @@ export default function ManageProducts() {
                     </td>
                     <td className="p-4">
                       <div className="flex items-center justify-center gap-2">
+                        {/* زر إضافة عرض */}
+                        <button 
+                          onClick={() => setOfferProduct(product)}
+                          className={`p-2 rounded-sm transition-colors ${product.sale_price ? 'text-green-600 bg-green-50 hover:bg-green-100' : 'text-gray-400 hover:text-green-600 hover:bg-gray-100'}`}
+                          title={product.sale_price ? "Manage Offer" : "Add Offer"}
+                        >
+                          <Percent size={18} />
+                        </button>
+                        
                         <button 
                           onClick={() => setEditingProduct(product)}
                           className="p-2 text-blue-600 hover:bg-blue-50 rounded-sm transition-colors"
@@ -204,12 +228,105 @@ export default function ManageProducts() {
           onClose={() => setEditingProduct(null)} 
         />
       )}
+
+      {offerProduct && (
+        <OfferModal 
+          product={offerProduct} 
+          onClose={() => setOfferProduct(null)} 
+        />
+      )}
     </div>
   );
 }
 
 // ---------------------------------------------------------
-// 3. مكون نافذة التعديل (Edit Modal) - المحدث بالتلاتة Select
+// 3. مكون نافذة إضافة وتعديل العروض السريعة (Offer Modal)
+// ---------------------------------------------------------
+
+function OfferModal({ product, onClose }) {
+  const queryClient = useQueryClient();
+  const [salePrice, setSalePrice] = useState(product.sale_price || '');
+
+  const updateMutation = useMutation({
+    mutationFn: updateProduct,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+      alert('Offer updated successfully!');
+      onClose();
+    },
+    onError: (err) => {
+      alert(`Error updating offer: ${err.message}`);
+    }
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    updateMutation.mutate({ id: product.id, sale_price: salePrice });
+  };
+
+  const handleRemoveOffer = () => {
+    updateMutation.mutate({ id: product.id, sale_price: null });
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/60 z-[1001] flex items-center justify-center p-4 backdrop-blur-sm">
+      <div className="bg-white rounded-md shadow-2xl w-full max-w-sm relative">
+        <div className="border-b border-gray-100 p-4 flex justify-between items-center">
+          <h2 className="text-sm font-black uppercase tracking-widest text-[#2d2d2d] flex items-center gap-2">
+            <Percent size={16} className="text-green-600" />
+            Product Offer
+          </h2>
+          <button onClick={onClose} className="p-1 text-gray-400 hover:text-red-500 rounded-full transition-colors">
+            <X size={18} />
+          </button>
+        </div>
+        <div className="p-6">
+          <p className="text-xs font-bold text-gray-500 mb-4 uppercase tracking-wider">{product.name}</p>
+          <form id="offer-form" onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">Original Price</label>
+              <input type="text" disabled value={`LE ${product.price}`} className="w-full border border-gray-200 bg-gray-50 rounded-sm px-4 py-2 text-gray-500" />
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold text-green-600 uppercase tracking-widest mb-2">Sale Price (LE)</label>
+              <input 
+                type="number" 
+                required 
+                value={salePrice} 
+                onChange={(e) => setSalePrice(e.target.value)} 
+                className="w-full border border-green-300 rounded-sm px-4 py-2 focus:border-green-600 focus:ring-1 focus:ring-green-600 outline-none font-bold" 
+                placeholder="Enter new offer price..." 
+                autoFocus
+              />
+            </div>
+          </form>
+        </div>
+        <div className="border-t border-gray-100 p-4 flex justify-between gap-3 bg-gray-50 rounded-b-md">
+          <button 
+            type="button" 
+            onClick={handleRemoveOffer} 
+            disabled={!product.sale_price || updateMutation.isPending} 
+            className="px-4 py-2 text-[11px] font-black uppercase tracking-widest text-red-500 hover:bg-red-50 rounded-sm disabled:opacity-50"
+          >
+            Remove Offer
+          </button>
+          <button 
+            type="submit" 
+            form="offer-form" 
+            disabled={updateMutation.isPending} 
+            className="px-6 py-2 bg-green-600 rounded-sm text-[11px] font-black uppercase tracking-widest text-white hover:bg-green-700 disabled:opacity-70 flex items-center gap-2"
+          >
+            {updateMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+            Save Offer
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------
+// 4. مكون نافذة التعديل الأساسية (Edit Modal)
 // ---------------------------------------------------------
 
 function EditProductModal({ product, onClose }) {
@@ -223,16 +340,16 @@ function EditProductModal({ product, onClose }) {
     id: product.id,
     name: product.name || '',
     collection: product.collection || '', 
-    main_category: product.collection || '', // اجعلها تأخذ قيمة collection الافتراضية
+    main_category: product.collection || '',
     category: product.category || '',
     price: product.price || 0,
+    sale_price: product.sale_price || '', // <-- إضافة حقل سعر العرض
     description: product.description || '',
     sizes: product.sizes ? [...product.sizes] : [],
     collection_id: product.collection_id || '',
     image_urls: product.image_urls ? [...product.image_urls] : [],
   });
 
-  // تحديد القوائم الفرعية المتاحة بناءً على الـ Main Category المختار
   const availableSubCategories = categoriesData?.find(
     cat => cat.main_name === formData.main_category
   )?.sub_items || [];
@@ -254,7 +371,6 @@ function EditProductModal({ product, onClose }) {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // 1. معالج تغيير الـ Collection
   const handleCollectionChange = (e) => {
     const selectedId = e.target.value;
     const selectedColl = collections?.find(c => c.id.toString() === selectedId.toString());
@@ -271,9 +387,9 @@ function EditProductModal({ product, onClose }) {
     const value = e.target.value;
     setFormData(prev => ({
       ...prev,
-      main_category: value, // للقائمة المنسدلة في الـ UI
-      collection: value,    // القيمة التي سيتم حفظها فعلياً في عمود collection بالداتابيز
-      category: ''          // تصفير التصنيف الفرعي
+      main_category: value, 
+      collection: value,    
+      category: ''          
     }));
   };
 
@@ -377,7 +493,7 @@ function EditProductModal({ product, onClose }) {
 
             <hr className="border-gray-100" />
 
-            {/* Product Details - التلاتة Select هنا */}
+            {/* Product Details */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="md:col-span-2">
                 <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2">Product Name</label>
@@ -385,11 +501,15 @@ function EditProductModal({ product, onClose }) {
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2">Price (LE)</label>
+                <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2">Regular Price (LE)</label>
                 <input type="number" name="price" value={formData.price} onChange={handleChange} required className="w-full border border-gray-300 rounded-sm px-4 py-2 focus:border-[#004b93] outline-none" />
               </div>
 
-              {/* 1. Collection Select */}
+              <div>
+                <label className="block text-[11px] font-bold text-green-600 uppercase tracking-widest mb-2">Sale Price (LE) - Optional</label>
+                <input type="number" name="sale_price" value={formData.sale_price} onChange={handleChange} className="w-full border border-gray-300 rounded-sm px-4 py-2 focus:border-green-600 outline-none" placeholder="Leave blank for no offer" />
+              </div>
+
               <div>
                 <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2">Collection</label>
                 <select 
@@ -405,7 +525,6 @@ function EditProductModal({ product, onClose }) {
                 </select>
               </div>
 
-              {/* 2. Main Category Select */}
               <div>
                 <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2">
                   Main Category (Gender/Group)
@@ -419,13 +538,11 @@ function EditProductModal({ product, onClose }) {
                 >
                   <option value="" disabled>Select Main Category</option>
                   {categoriesData?.map((cat, idx) => (
-                    // نستخدم cat.main_name هنا بدلاً من cat.title
                     <option key={idx} value={cat.main_name}>{cat.main_name}</option>
                   ))}
                 </select>
               </div>
 
-              {/* 3. Sub Category Select */}
               <div>
                 <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2">Sub Category</label>
                 <select 

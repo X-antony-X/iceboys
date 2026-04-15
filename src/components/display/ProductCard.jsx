@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { Heart, Eye, ShoppingBag, X, Minus, Plus, Bell } from 'lucide-react';
+import { Heart, Eye, ShoppingBag, X } from 'lucide-react';
 import { useCart } from '../header/CartProvider';
 import { useWishlist } from '../header/WishlistProvider';
 import { supabase } from '../../services/supabase';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
 
 // 1. دالة جلب البيانات من Supabase
 const fetchProducts = async () => {
@@ -59,7 +58,6 @@ export default function ProductCard({ product, viewMode }) {
     navigate(`/product/${product.id}`);
   };
   
-  // 1. الترتيب الصح: نادي الـ Hooks الأول
   const { isInWishlist, addToWishlistLocal, removeFromWishlistLocal } = useWishlist(); 
   const isFavorite = isInWishlist(product.id);
 
@@ -68,9 +66,14 @@ export default function ProductCard({ product, viewMode }) {
   const [quantity, setQuantity] = useState(1);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
 
-  // 2. دالة الـ Toggle (إضافة ومسح)
+  // منطق حساب الخصومات (يدعم sale_price أو compare_at_price)
+  const currentPrice = product.sale_price ? product.sale_price : product.price;
+  const originalPrice = product.compare_at_price || product.old_price || (product.sale_price ? product.price : null);
+  const isOnSale = originalPrice && originalPrice > currentPrice;
+  const savedAmount = isOnSale ? (originalPrice - currentPrice) : 0;
+
   const handleFavoriteToggle = async (e) => {
-    e.preventDefault(); // عشان لو الكارت جواه لينك ميفتحش
+    e.preventDefault(); 
     
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -80,7 +83,6 @@ export default function ProductCard({ product, viewMode }) {
     }
 
     if (isFavorite) {
-      // --- حالة المسح ---
       const { error } = await supabase
         .from('favorites')
         .delete()
@@ -89,24 +91,18 @@ export default function ProductCard({ product, viewMode }) {
 
       if (!error) {
         if(removeFromWishlistLocal) removeFromWishlistLocal(product.id);
-        console.log("Removed from DB");
       }
     } else {
-      // --- حالة الإضافة ---
       const { error } = await supabase
         .from('favorites')
         .insert([{ user_id: user.id, product_id: product.id }]);
 
       if (!error) {
         if(addToWishlistLocal) addToWishlistLocal(product);
-        console.log("Added to DB");
-      } else if (error.code === '23505') {
-        console.log("Already there");
       }
     }
   };
 
-  // إعدادات الـ Swipe للموبايل
   const [touchStart, setTouchStart] = useState(null);
   const [touchEnd, setTouchEnd] = useState(null);
 
@@ -123,9 +119,9 @@ export default function ProductCard({ product, viewMode }) {
     const minSwipeDistance = 50;
 
     if (distance > minSwipeDistance && hasMultipleImages) {
-      setActiveImageIndex(1); // سحب لليسار
+      setActiveImageIndex(1);
     } else if (distance < -minSwipeDistance && hasMultipleImages) {
-      setActiveImageIndex(0); // سحب لليمين
+      setActiveImageIndex(0);
     }
   };
 
@@ -160,19 +156,24 @@ export default function ProductCard({ product, viewMode }) {
   };
 
   return (
-    // ضفنا h-full عشان الكروت كلها في الـ grid تبقى نفس الطول
     <div className={`group flex ${isList ? 'flex-col sm:flex-row gap-4 sm:gap-8 items-center border-b border-gray-100 pb-6 sm:pb-8' : 'flex-col h-full'} w-full bg-white transition-all duration-300 relative`}>
       
       {/* حاوية الصورة والتحكمات */}
       <div className="relative w-full">
         <div 
           onClick={goToDetails}
-          className={`relative overflow-hidden bg-[#f8f9fa] rounded-sm ${isList ? 'w-full sm:w-1/3 max-w-[280px]' : 'w-full'} aspect-[4/5]`}
+          className={`relative overflow-hidden bg-[#f8f9fa] rounded-sm cursor-pointer ${isList ? 'w-full sm:w-1/3 max-w-[280px]' : 'w-full'} aspect-[4/5]`}
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
         >
-          
+          {/* بادج الخصم على الصورة */}
+          {isOnSale && (
+            <div className="absolute top-2 left-2 sm:top-3 sm:left-3 z-30 bg-[#ff0000] text-white text-[10px] sm:text-xs font-black px-2.5 py-1 uppercase tracking-widest rounded-sm shadow-sm">
+              Sale
+            </div>
+          )}
+
           {/* الصورة الأولى */}
           <img 
             src={mainImage} 
@@ -191,7 +192,7 @@ export default function ProductCard({ product, viewMode }) {
 
           {/* نافذة الإضافة السريعة */}
           <div className={`absolute inset-0 bg-white/95 backdrop-blur-sm z-40 flex flex-col items-center justify-center p-3 sm:p-6 transition-all duration-300 ${showQuickAdd ? 'opacity-100 visible' : 'opacity-0 invisible'}`}>
-            <button onClick={() => setShowQuickAdd(false)} className="absolute top-2 right-2 text-gray-400 hover:text-[#2d2d2d] p-1">
+            <button onClick={(e) => { e.stopPropagation(); setShowQuickAdd(false); }} className="absolute top-2 right-2 text-gray-400 hover:text-[#2d2d2d] p-1">
               <X size={18} />
             </button>
             <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-gray-400 mb-2 text-center">
@@ -201,7 +202,7 @@ export default function ProductCard({ product, viewMode }) {
               {product.sizes?.map((item) => (
                 <button 
                   key={item.size} 
-                  onClick={() => parseInt(item.quantity) > 0 && setSelectedSize(item.size)}
+                  onClick={(e) => { e.stopPropagation(); parseInt(item.quantity) > 0 && setSelectedSize(item.size); }}
                   className={`w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center text-[10px] sm:text-xs font-bold rounded-sm transition-all border ${
                     selectedSize === item.size ? 'border-[#004b93] bg-[#004b93] text-white shadow-md' : parseInt(item.quantity) === 0 ? 'border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed line-through' : 'border-gray-200 bg-white text-gray-700 hover:border-[#004b93]'
                   }`}
@@ -213,7 +214,7 @@ export default function ProductCard({ product, viewMode }) {
             <div className="flex w-full gap-2 mt-auto">
               <button 
                 disabled={!selectedSize || isOutOfStock}
-                onClick={handleAddToCart}
+                onClick={(e) => { e.stopPropagation(); handleAddToCart(); }}
                 className={`w-full py-2.5 text-[10px] font-black tracking-widest uppercase flex items-center justify-center gap-2 rounded-sm transition-all ${selectedSize ? 'bg-[#004b93] text-white hover:bg-[#00366b]' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
               >
                 <ShoppingBag size={12} /> {isOutOfStock ? 'Notify Me' : 'Add'}
@@ -228,7 +229,7 @@ export default function ProductCard({ product, viewMode }) {
                 {isFavorite ? 'Remove from Wishlist' : 'Add To Wishlist'}
               </span>
               <button 
-                onClick={handleFavoriteToggle} // اتغيرت هنا
+                onClick={handleFavoriteToggle}
                 className={`w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center transition-all duration-300 rounded-full ${
                   isFavorite ? 'bg-[#004b93] text-white shadow-md' : 'bg-white/80 text-gray-600 hover:bg-[#004b93] hover:text-white shadow-sm'
                 }`}
@@ -247,17 +248,17 @@ export default function ProductCard({ product, viewMode }) {
             </div>
           </div>
 
-          {/* زر Quick Add للديسكتب (بيظهر وقت الـ Hover) */}
+          {/* زر Quick Add للديسكتب */}
           {!isList && (
             <button 
-              onClick={handleOpenQuickAdd}
+              onClick={(e) => { e.stopPropagation(); handleOpenQuickAdd(); }}
               className="hidden lg:flex absolute bottom-0 left-0 w-full bg-[#004b93] text-white font-bold text-[11px] tracking-widest py-4 translate-y-full transition-transform duration-300 group-hover:translate-y-0 hover:bg-[#2d2d2d] items-center justify-center gap-2 z-20"
             >
               <ShoppingBag size={14} /> QUICK ADD
             </button>
           )}
 
-          {/* ✅ النقط جوه الصورة من تحت (للموبايل) بناءً على التصميم */}
+          {/* النقط جوه الصورة للموبايل */}
           {hasMultipleImages && !isList && (
             <div className="absolute bottom-2.5 w-full flex justify-center gap-1.5 z-20 lg:hidden">
               <button 
@@ -273,24 +274,41 @@ export default function ProductCard({ product, viewMode }) {
         </div>
       </div>
 
-      {/* تفاصيل المنتج (خليناها flex-grow عشان تملى المساحة وتزق الزرار لتحت دايماً) */}
+      {/* تفاصيل المنتج (الاسم، السعر، والخصم) */}
       <div className={`mt-3 w-full px-1 flex flex-col flex-grow ${isList ? 'flex-1 text-center sm:text-left' : 'text-center'}`}>
         
         <div>
-          <h3 onClick={goToDetails} className="text-[#2d2d2d] text-[13px] md:text-[15px] font-bold uppercase tracking-tight lg:group-hover:text-[#004b93] transition-colors line-clamp-1">
+          <h3 onClick={goToDetails} className="text-[#2d2d2d] text-[13px] md:text-[15px] font-bold uppercase tracking-tight lg:group-hover:text-[#004b93] transition-colors line-clamp-1 cursor-pointer">
             {product.name}
           </h3>
           
-          <div className={`mt-1 flex items-center ${isList ? 'justify-center sm:justify-start' : 'justify-center'} gap-2`}>
-            <p className="text-[#004b93] font-black text-[15px] md:text-lg tracking-wide">
-              LE {product.price?.toFixed(2)}
-            </p>
+          {/* قسم السعر */}
+          <div className={`mt-2 flex flex-col ${isList ? 'items-center sm:items-start' : 'items-center'} justify-center gap-1.5`}>
+            {isOnSale ? (
+              <>
+                <div className="flex items-center justify-center gap-2 md:gap-3">
+                  <span className="text-[#2d2d2d] font-bold text-[14px] md:text-[16px] line-through decoration-2">
+                    LE {originalPrice?.toFixed(2)}
+                  </span>
+                  <span className="text-[#dc2626] font-black text-[15px] md:text-lg tracking-wide">
+                    LE {currentPrice?.toFixed(2)}
+                  </span>
+                </div>
+                <div className="bg-[#ff0000] text-white text-[11px] md:text-[12px] font-bold px-3 py-1 rounded-md tracking-wider inline-block">
+                  Save LE {savedAmount?.toFixed(2)}
+                </div>
+              </>
+            ) : (
+              <p className="text-[#004b93] font-black text-[15px] md:text-lg tracking-wide">
+                LE {currentPrice?.toFixed(2)}
+              </p>
+            )}
           </div>
         </div>
 
-        {/* زر الشراء للموبايل (شكل متناسق مع تصميم صورتك وبياخد مساحته دايماً في أسفل الكارت) */}
+        {/* زر الشراء للموبايل */}
         {!isList && (
-          <div className="flex flex-col lg:hidden mt-auto pt-3 w-full pb-1">
+          <div className="flex flex-col lg:hidden mt-auto pt-4 w-full pb-1">
             <button 
               onClick={handleOpenQuickAdd}
               className="w-full bg-white border border-gray-200 hover:border-[#004b93] text-[#2d2d2d] hover:text-[#004b93] py-2.5 text-[11px] font-bold tracking-widest flex items-center justify-center gap-1.5 rounded-sm active:scale-95 transition-all shadow-sm"
