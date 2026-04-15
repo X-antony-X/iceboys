@@ -2,6 +2,7 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../services/supabase'; // تأكد من مسار ملف الـ supabase عندك
 import { Loader2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 // دالة جلب البيانات من Supabase
 const fetchHeroData = async () => {
@@ -72,14 +73,14 @@ const HeroSection = () => {
             </p>
 
             <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
-              <button className="group relative bg-[#2d2d2d] text-white px-12 py-5 font-bold text-lg overflow-hidden transition-all hover:scale-105 active:scale-95">
-                <span className="relative z-10">SHOP</span>
+              <button className="cursor-pointer group relative bg-[#2d2d2d] text-white px-12 py-5 font-bold text-lg overflow-hidden transition-all hover:scale-105 active:scale-95">
+                <Link to="/new-arrivals" className="relative z-10 cursor-pointer">SHOP</Link>
                 <div className="absolute inset-0 bg-[#004b93] translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
               </button>
               
-              <button className="px-12 py-5 font-bold text-lg border-2 border-[#2d2d2d] text-[#2d2d2d] hover:bg-gray-100 transition-all uppercase tracking-tighter">
+              <Link to="/new-arrivals" className="px-12 py-5 font-bold text-lg border-2 border-[#2d2d2d] text-[#2d2d2d] hover:bg-gray-100 transition-all uppercase tracking-tighter">
                 NEW ARRIVALS
-              </button>
+              </Link>
             </div>
           </div>
 
@@ -104,7 +105,7 @@ const HeroSection = () => {
 
               {/* Sale Tag */}
               <div className="absolute bottom-10 -right-8 bg-red-600 text-white px-6 py-2 font-black italic -rotate-90 tracking-widest text-sm shadow-xl">
-                SALE -30%
+                SALES
               </div>
             </div>
           </div>
