@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../services/supabase'; // تأكد من مسار الـ supabase
 import { useCart } from '../header/CartProvider'; // تأكد من مسار الـ CartProvider
@@ -28,7 +28,8 @@ const fetchProductById = async (id) => {
 };
 
 export default function ProductDetails() {
-  const { id } = useParams(); // بناخد الـ ID من رابط الصفحة
+  const { id } = useParams();
+  const navigate = useNavigate();
   const { addToCart } = useCart();
 
   // جلب البيانات باستخدام React Query
@@ -66,6 +67,24 @@ export default function ProductDetails() {
   };
   const handleDecrease = () => {
     if (quantity > 1) setQuantity(prev => prev - 1);
+  };
+
+const handleBuyNow = () => {
+    if (!selectedSize || availableStock === 0) return;
+    
+    // توجيه المستخدم لصفحة الدفع مع إرسال بيانات المنتج الحالي
+    navigate('/checkout', {
+      state: {
+        selectedProduct: {
+          id: product.id,
+          name: product.name,
+          size: selectedSize,
+          price: product.price,
+          quantity: quantity,
+          image: mainImage
+        }
+      }
+    });
   };
 
   const handleAddToCart = () => {
@@ -160,14 +179,14 @@ export default function ProductDetails() {
 
           {/* اختيار المقاس */}
           <div className="mb-6">
-            <div className="flex justify-between items-end mb-3">
+            {/* <div className="flex justify-between items-end mb-3">
               <span className="text-sm font-bold text-[#2d2d2d] uppercase tracking-widest">
                 Size: {selectedSize || ''}
               </span>
               <button className="text-xs font-bold text-gray-500 hover:text-[#004b93] flex items-center gap-1 uppercase tracking-widest underline underline-offset-4">
                 <Ruler size={14} /> Size Guide
               </button>
-            </div>
+            </div> */}
             
             <div className="flex flex-wrap gap-3">
               {product.sizes?.map((item) => {
@@ -242,22 +261,11 @@ export default function ProductDetails() {
               </button>
             </div>
 
-            {/* Add to Cart Button */}
-            <button 
-              onClick={handleAddToCart}
-              disabled={!selectedSize || availableStock === 0}
-              className={`flex-1 h-14 font-black text-xs uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 ${
-                selectedSize && availableStock > 0 
-                  ? 'bg-[#2d2d2d] text-white hover:bg-black hover:shadow-lg' 
-                  : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-              }`}
-            >
-              Add To Cart
-            </button>
           </div>
 
           {/* Buy It Now Button */}
           <button 
+            onClick={handleBuyNow}
             disabled={!selectedSize || availableStock === 0}
             className={`w-full h-14 font-black text-xs uppercase tracking-[0.2em] border-2 transition-all flex items-center justify-center mb-8 ${
               selectedSize && availableStock > 0

@@ -1,10 +1,12 @@
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom'; // استيراد Portal لإخراج المكون خارج الهيدر
+import { useNavigate } from 'react-router-dom'; // 1. استدعاء أداة التوجيه
 import { X, Minus, Plus, ShoppingBag, Trash2 } from 'lucide-react';
 import { useCart } from '../header/CartProvider'; 
 
 export default function CartSidebar({ isOpen, onClose }) {
   const { cartItems, updateQuantity, removeItem, subtotal } = useCart();
+  const navigate = useNavigate(); // 2. تعريف أداة التوجيه
 
   const FREE_SHIPPING_THRESHOLD = 3000;
   const amountAwayFromFreeShipping = Math.max(0, FREE_SHIPPING_THRESHOLD - subtotal);
@@ -19,6 +21,17 @@ export default function CartSidebar({ isOpen, onClose }) {
     }
     return () => { document.body.style.overflow = 'unset'; };
   }, [isOpen]);
+
+  // 3. دالة الانتقال لصفحة الدفع
+  const handleCheckout = () => {
+    onClose(); // إغلاق السلة الجانبية أولاً
+    // التوجيه لصفحة الدفع مع إرسال جميع محتويات السلة في الـ state
+    navigate('/checkout', {
+      state: {
+        cartData: cartItems
+      }
+    });
+  };
 
   if (!isOpen) return null;
 
@@ -98,7 +111,12 @@ export default function CartSidebar({ isOpen, onClose }) {
                 <span className="font-black text-[#2d2d2d]">Total:</span>
                 <span className="font-black text-[#004b93]">LE {subtotal.toFixed(2)}</span>
               </div>
-              <button className="w-full bg-[#2d2d2d] hover:bg-black text-white py-4 text-[13px] font-black tracking-widest uppercase rounded-sm flex items-center justify-center gap-2 transition-all">
+              
+              {/* 4. ربط دالة الدفع بالزرار */}
+              <button 
+                onClick={handleCheckout} 
+                className="w-full bg-[#2d2d2d] hover:bg-black text-white py-4 text-[13px] font-black tracking-widest uppercase rounded-sm flex items-center justify-center gap-2 transition-all"
+              >
                 <ShoppingBag size={16} /> Checkout
               </button>
             </div>
