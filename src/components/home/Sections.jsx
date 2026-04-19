@@ -159,7 +159,7 @@ const ProductSection = ({ title, products }) => {
 
       {/* زرار عرض المزيد */}
       <div className="w-full mt-6 flex justify-center md:justify-start px-4 md:px-0">
-        <Link to={`/category/${title.toLowerCase()}`} className="w-full md:w-auto px-12 py-3 bg-white border border-gray-300 text-[#2d2d2d] text-[11px] md:text-xs font-black uppercase tracking-widest hover:bg-[#004b93] hover:text-white hover:border-[#004b93] transition-all duration-300 text-center text-decoration-none">
+        <Link to="new-arrivals" className="w-full md:w-auto px-12 py-3 bg-white border border-gray-300 text-[#2d2d2d] text-[11px] md:text-xs font-black uppercase tracking-widest hover:bg-[#004b93] hover:text-white hover:border-[#004b93] transition-all duration-300 text-center text-decoration-none">
           Discover All {title}
         </Link>
       </div>
