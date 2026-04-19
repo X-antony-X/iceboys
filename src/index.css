@@ -11,3 +11,12 @@ input::-webkit-credentials-auto-fill-button {
   display: none !important;
   pointer-events: none;
 }
+
+@keyframes colorPulse {
+  0%, 100% { color: #ff0000; } /* أحمر فاتح */
+  50% { color: #800000; }    /* أحمر غامق */
+}
+
+.animate-sale-blink {
+  animation: colorPulse 1.5s infinite;
+}

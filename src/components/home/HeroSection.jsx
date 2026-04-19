@@ -73,10 +73,10 @@ const HeroSection = () => {
             </p>
 
             <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
-              <button className="cursor-pointer group relative bg-[#2d2d2d] text-white px-12 py-5 font-bold text-lg overflow-hidden transition-all hover:scale-105 active:scale-95">
-                <Link to="/new-arrivals" className="relative z-10 cursor-pointer">SHOP</Link>
+              <Link to="/new-arrivals" className="cursor-pointer group relative bg-[#2d2d2d] text-white px-12 py-5 font-bold text-lg overflow-hidden transition-all hover:scale-105 active:scale-95">
+                <span className="relative z-10">SHOP</span>
                 <div className="absolute inset-0 bg-[#004b93] translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
-              </button>
+              </Link>
               
               <Link to="/new-arrivals" className="px-12 py-5 font-bold text-lg border-2 border-[#2d2d2d] text-[#2d2d2d] hover:bg-gray-100 transition-all uppercase tracking-tighter">
                 NEW ARRIVALS

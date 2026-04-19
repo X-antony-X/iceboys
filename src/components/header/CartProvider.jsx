@@ -1,14 +1,24 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
-  const [cartItems, setCartItems] = useState([]);
+  // 1. قراءة البيانات من LocalStorage عند أول تحميل للموقع
+  const [cartItems, setCartItems] = useState(() => {
+    const savedCart = localStorage.getItem('iceboys_cart');
+    // لو فيه بيانات بنحولها من String لـ JSON، لو مفيش بنبدأ بمصفوفة فاضية
+    return savedCart ? JSON.parse(savedCart) : [];
+  });
+
+  // 2. "مراقب" (Effect) بيحدث الـ LocalStorage أوتوماتيكياً مع كل تغيير في الـ cartItems
+  useEffect(() => {
+    localStorage.setItem('iceboys_cart', JSON.stringify(cartItems));
+  }, [cartItems]);
 
   // إضافة منتج للسلة
   const addToCart = (product, size, quantity) => {
     setCartItems(prev => {
-      const cartItemId = `${product.id}-${size}`; // ID فريد للمنتج بالمقاس
+      const cartItemId = `${product.id}-${size}`; 
       const existingItem = prev.find(item => item.cartItemId === cartItemId);
 
       if (existingItem) {
@@ -24,14 +34,14 @@ export const CartProvider = ({ children }) => {
         id: product.id,
         name: product.name,
         price: product.price,
-        image: product.mainImage,
+        image: product.image_urls && product.image_urls.length > 0 ? product.image_urls[0] : '',
         size: size,
         quantity: quantity
       }];
     });
   };
 
-  // تعديل الكمية (لأزرار + و - في السايد بار)
+  // تعديل الكمية
   const updateQuantity = (cartItemId, newQuantity) => {
     if (newQuantity < 1) return;
     setCartItems(prev => prev.map(item => 

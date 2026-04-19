@@ -38,10 +38,10 @@ const ContactSection = () => {
 
       {/* الأيقونات: استخدام flex-wrap وتقليل الـ gap والـ padding على الموبايل */}
       <div className="flex flex-wrap justify-center items-center gap-4 sm:gap-6 w-full px-2">
-        <a href="#" className="p-3 sm:p-4 bg-white border border-gray-200 rounded-full text-gray-500 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all duration-300 hover:scale-110 hover:-translate-y-2 shadow-sm">
+        <a href="https://www.facebook.com/ICBOYS" className="p-3 sm:p-4 bg-white border border-gray-200 rounded-full text-gray-500 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all duration-300 hover:scale-110 hover:-translate-y-2 shadow-sm">
           <FaFacebookF className="text-lg sm:text-xl" />
         </a>
-        <a href="#" className="p-3 sm:p-4 bg-white border border-gray-200 rounded-full text-gray-500 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all duration-300 hover:scale-110 hover:-translate-y-2 shadow-sm">
+        <a href="https://www.instagram.com/iceboys.icb?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" className="p-3 sm:p-4 bg-white border border-gray-200 rounded-full text-gray-500 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all duration-300 hover:scale-110 hover:-translate-y-2 shadow-sm">
           <FaInstagram className="text-xl sm:text-2xl" />
         </a>
         <a href="#" className="p-3 sm:p-4 bg-white border border-gray-200 rounded-full text-gray-500 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all duration-300 hover:scale-110 hover:-translate-y-2 shadow-sm">

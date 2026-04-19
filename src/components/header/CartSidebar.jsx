@@ -22,16 +22,14 @@ export default function CartSidebar({ isOpen, onClose }) {
     return () => { document.body.style.overflow = 'unset'; };
   }, [isOpen]);
 
-  // 3. دالة الانتقال لصفحة الدفع
   const handleCheckout = () => {
-    onClose(); // إغلاق السلة الجانبية أولاً
-    // التوجيه لصفحة الدفع مع إرسال جميع محتويات السلة في الـ state
-    navigate('/checkout', {
-      state: {
-        cartData: cartItems
-      }
-    });
-  };
+      onClose(); 
+      navigate('/checkout', {
+        state: {
+          checkoutItems: cartItems // غيرنا المسمى هنا لـ checkoutItems
+        }
+      });
+    };
 
   if (!isOpen) return null;
 

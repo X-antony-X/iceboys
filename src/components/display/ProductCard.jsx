@@ -156,29 +156,36 @@ export default function ProductCard({ product, viewMode }) {
   };
 
   return (
-    <div className={`group flex ${isList ? 'flex-col sm:flex-row gap-4 sm:gap-8 items-center border-b border-gray-100 pb-6 sm:pb-8' : 'flex-col h-full'} w-full bg-white transition-all duration-300 relative`}>
+<div className={`group flex ${isList ? 'flex-col sm:flex-row gap-4 sm:gap-8 items-center border-b border-gray-100 pb-6 sm:pb-8' : 'flex-col h-full bg-white border border-gray-100/80 rounded-2xl p-2 sm:p-3 hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:border-gray-200'} w-full transition-all duration-500 relative`}>
       
       {/* حاوية الصورة والتحكمات */}
       <div className="relative w-full">
         <div 
           onClick={goToDetails}
-          className={`relative overflow-hidden bg-[#f8f9fa] rounded-sm cursor-pointer ${isList ? 'w-full sm:w-1/3 max-w-[280px]' : 'w-full'} aspect-[4/5]`}
+          className={`relative overflow-hidden bg-[#f8f9fa] rounded-xl cursor-pointer ${isList ? 'w-full sm:w-1/3 max-w-[280px]' : 'w-full'} aspect-[4/5] shadow-sm`}
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
         >
-          {/* بادج الخصم على الصورة */}
-          {isOnSale && (
-            <div className="absolute top-2 left-2 sm:top-3 sm:left-3 z-30 bg-[#ff0000] text-white text-[10px] sm:text-xs font-black px-2.5 py-1 uppercase tracking-widest rounded-sm shadow-sm">
-              Sale
-            </div>
-          )}
+
+        {isOnSale && (
+          <div className="absolute top-1 left-1 z-30 
+                          bg-transparent 
+                          animate-sale-blink sm:animate-none
+                          sm:bg-[#ff0000] sm:text-white 
+                          text-[10px] sm:text-xs font-black 
+                          p-0 sm:px-3 sm:py-1.5 
+                          uppercase tracking-widest 
+                          shadow-none sm:shadow-md rounded-lg">
+            Sale
+          </div>
+        )}
 
           {/* الصورة الأولى */}
           <img 
             src={mainImage} 
             alt={product.name} 
-            className={`w-full h-full object-cover transition-all duration-500 lg:group-hover:scale-110 
+            className={`w-full h-full object-cover transition-transform duration-700 ease-out lg:group-hover:scale-110 
               ${activeImageIndex === 0 ? 'opacity-100 z-10' : 'opacity-0 lg:opacity-100 z-0'}`}
           />
           
@@ -186,25 +193,25 @@ export default function ProductCard({ product, viewMode }) {
           <img 
             src={hoverImage} 
             alt={`${product.name} hover`} 
-            className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 lg:opacity-0 lg:group-hover:opacity-100 
+            className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ease-out lg:opacity-0 lg:group-hover:opacity-100 lg:group-hover:scale-110
               ${activeImageIndex === 1 ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
           />
 
           {/* نافذة الإضافة السريعة */}
-          <div className={`absolute inset-0 bg-white/95 backdrop-blur-sm z-40 flex flex-col items-center justify-center p-3 sm:p-6 transition-all duration-300 ${showQuickAdd ? 'opacity-100 visible' : 'opacity-0 invisible'}`}>
-            <button onClick={(e) => { e.stopPropagation(); setShowQuickAdd(false); }} className="absolute top-2 right-2 text-gray-400 hover:text-[#2d2d2d] p-1">
-              <X size={18} />
+          <div className={`absolute inset-0 bg-white/95 backdrop-blur-md z-40 flex flex-col items-center justify-center p-3 sm:p-6 transition-all duration-300 rounded-xl ${showQuickAdd ? 'opacity-100 visible scale-100' : 'opacity-0 invisible scale-95'}`}>
+            <button onClick={(e) => { e.stopPropagation(); setShowQuickAdd(false); }} className="absolute top-3 right-3 text-gray-400 hover:text-[#2d2d2d] p-1.5 bg-gray-50 hover:bg-gray-100 rounded-full transition-colors">
+              <X size={16} />
             </button>
-            <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-gray-400 mb-2 text-center">
+            <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-widest text-gray-500 mb-3 text-center">
               {selectedSize ? `Size: ${selectedSize}` : 'Select a Size'}
             </span>
-            <div className="flex flex-wrap justify-center gap-1.5 mb-4 w-full px-1">
+            <div className="flex flex-wrap justify-center gap-2 mb-5 w-full px-1">
               {product.sizes?.map((item) => (
                 <button 
                   key={item.size} 
                   onClick={(e) => { e.stopPropagation(); parseInt(item.quantity) > 0 && setSelectedSize(item.size); }}
-                  className={`w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center text-[10px] sm:text-xs font-bold rounded-sm transition-all border ${
-                    selectedSize === item.size ? 'border-[#004b93] bg-[#004b93] text-white shadow-md' : parseInt(item.quantity) === 0 ? 'border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed line-through' : 'border-gray-200 bg-white text-gray-700 hover:border-[#004b93]'
+                  className={`w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center text-[10px] sm:text-xs font-bold rounded-lg transition-all border ${
+                    selectedSize === item.size ? 'border-[#004b93] bg-[#004b93] text-white shadow-md scale-105' : parseInt(item.quantity) === 0 ? 'border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed line-through' : 'border-gray-200 bg-white text-gray-700 hover:border-[#004b93] hover:text-[#004b93]'
                   }`}
                 >
                   {item.size}
@@ -215,35 +222,35 @@ export default function ProductCard({ product, viewMode }) {
               <button 
                 disabled={!selectedSize || isOutOfStock}
                 onClick={(e) => { e.stopPropagation(); handleAddToCart(); }}
-                className={`w-full py-2.5 text-[10px] font-black tracking-widest uppercase flex items-center justify-center gap-2 rounded-sm transition-all ${selectedSize ? 'bg-[#004b93] text-white hover:bg-[#00366b]' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
+                className={`w-full py-3 text-[11px] font-black tracking-widest uppercase flex items-center justify-center gap-2 rounded-xl transition-all shadow-sm ${selectedSize ? 'bg-[#004b93] text-white hover:bg-[#00366b] hover:shadow-md' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
               >
-                <ShoppingBag size={12} /> {isOutOfStock ? 'Notify Me' : 'Add'}
+                <ShoppingBag size={14} /> {isOutOfStock ? 'Notify Me' : 'Add To Cart'}
               </button>
             </div>
           </div>
 
           {/* الأيقونات العلوية */}
-          <div className="absolute top-1.5 right-1.5 sm:top-3 sm:right-3 flex flex-col gap-2 sm:gap-3 z-30">
+          <div className="absolute top-2 right-2 sm:top-3 sm:right-3 flex flex-col gap-2 sm:gap-3 z-30">
             <div className="relative group/tooltip flex items-center justify-end">
-              <span className="absolute right-full mr-3 text-[10px] font-black uppercase tracking-widest text-white bg-[#004b93] py-2 px-4 rounded-full shadow-lg opacity-0 invisible group-hover/tooltip:opacity-100 group-hover/tooltip:visible transition-all duration-300 whitespace-nowrap z-50">
+              <span className="absolute right-full mr-3 text-[10px] font-bold uppercase tracking-wider text-white bg-[#2d2d2d] py-1.5 px-3 rounded-lg shadow-lg opacity-0 invisible group-hover/tooltip:opacity-100 group-hover/tooltip:visible transition-all duration-300 whitespace-nowrap z-50">
                 {isFavorite ? 'Remove from Wishlist' : 'Add To Wishlist'}
               </span>
               <button 
                 onClick={handleFavoriteToggle}
-                className={`w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center transition-all duration-300 rounded-full ${
-                  isFavorite ? 'bg-[#004b93] text-white shadow-md' : 'bg-white/80 text-gray-600 hover:bg-[#004b93] hover:text-white shadow-sm'
+                className={`w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center transition-all duration-300 rounded-full backdrop-blur-sm ${
+                  isFavorite ? 'bg-[#004b93] text-white shadow-md scale-105' : 'bg-white/90 text-gray-600 hover:bg-[#004b93] hover:text-white shadow-sm hover:scale-105'
                 }`}
               >
-                <Heart size={18} fill={isFavorite ? "currentColor" : "none"} strokeWidth={2.5} />
+                <Heart size={16} fill={isFavorite ? "currentColor" : "none"} strokeWidth={2.5} />
               </button>
             </div>
 
             <div className="flex relative group/tooltip items-center justify-end">
-              <span className="absolute right-full mr-3 text-[10px] font-black uppercase tracking-widest text-white bg-[#004b93] py-2 px-4 rounded-full shadow-lg opacity-0 invisible group-hover/tooltip:opacity-100 group-hover/tooltip:visible transition-all duration-300 whitespace-nowrap z-50">
+              <span className="absolute right-full mr-3 text-[10px] font-bold uppercase tracking-wider text-white bg-[#2d2d2d] py-1.5 px-3 rounded-lg shadow-lg opacity-0 invisible group-hover/tooltip:opacity-100 group-hover/tooltip:visible transition-all duration-300 whitespace-nowrap z-50">
                 Quick View
               </span>
-              <button onClick={(e) => { e.stopPropagation(); goToDetails();}} className="w-8 h-8 sm:w-9 sm:h-9 bg-white/80 shadow-sm flex items-center justify-center text-gray-600 hover:bg-[#004b93] hover:text-white rounded-full transition-all duration-300">
-                <Eye size={18} strokeWidth={2.5} />
+              <button onClick={(e) => { e.stopPropagation(); goToDetails();}} className="w-8 h-8 sm:w-9 sm:h-9 bg-white/90 backdrop-blur-sm shadow-sm flex items-center justify-center text-gray-600 hover:bg-[#004b93] hover:text-white rounded-full transition-all duration-300 hover:scale-105">
+                <Eye size={16} strokeWidth={2.5} />
               </button>
             </div>
           </div>
@@ -252,73 +259,73 @@ export default function ProductCard({ product, viewMode }) {
           {!isList && (
             <button 
               onClick={(e) => { e.stopPropagation(); handleOpenQuickAdd(); }}
-              className="hidden lg:flex absolute bottom-0 left-0 w-full bg-[#004b93] text-white font-bold text-[11px] tracking-widest py-4 translate-y-full transition-transform duration-300 group-hover:translate-y-0 hover:bg-[#2d2d2d] items-center justify-center gap-2 z-20"
+              className="hidden lg:flex absolute bottom-0 left-0 w-full bg-[#004b93]/95 backdrop-blur-sm text-white font-bold text-[12px] tracking-widest py-3.5 translate-y-full transition-transform duration-300 group-hover:translate-y-0 hover:bg-[#2d2d2d] items-center justify-center gap-2 z-20"
             >
-              <ShoppingBag size={14} /> QUICK ADD
+              <ShoppingBag size={15} /> QUICK ADD
             </button>
           )}
-
-          {/* النقط جوه الصورة للموبايل */}
-          {hasMultipleImages && !isList && (
-            <div className="absolute bottom-2.5 w-full flex justify-center gap-1.5 z-20 lg:hidden">
-              <button 
-                onClick={(e) => { e.stopPropagation(); setActiveImageIndex(0); }}
-                className={`h-1.5 rounded-full transition-all duration-300 shadow-sm ${activeImageIndex === 0 ? 'bg-[#004b93] w-4' : 'bg-gray-300/90 w-1.5'}`}
-              />
-              <button 
-                onClick={(e) => { e.stopPropagation(); setActiveImageIndex(1); }}
-                className={`h-1.5 rounded-full transition-all duration-300 shadow-sm ${activeImageIndex === 1 ? 'bg-[#004b93] w-4' : 'bg-gray-300/90 w-1.5'}`}
-              />
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* تفاصيل المنتج (الاسم، السعر، والخصم) */}
-      <div className={`mt-3 w-full px-1 flex flex-col flex-grow ${isList ? 'flex-1 text-center sm:text-left' : 'text-center'}`}>
-        
-        <div>
-          <h3 onClick={goToDetails} className="text-[#2d2d2d] text-[13px] md:text-[15px] font-bold uppercase tracking-tight lg:group-hover:text-[#004b93] transition-colors line-clamp-1 cursor-pointer">
-            {product.name}
-          </h3>
-          
-          {/* قسم السعر */}
-          <div className={`mt-2 flex flex-col ${isList ? 'items-center sm:items-start' : 'items-center'} justify-center gap-1.5`}>
-            {isOnSale ? (
-              <>
-                <div className="flex items-center justify-center gap-2 md:gap-3">
-                  <span className="text-[#2d2d2d] font-bold text-[14px] md:text-[16px] line-through decoration-2">
-                    LE {originalPrice?.toFixed(2)}
-                  </span>
-                  <span className="text-[#dc2626] font-black text-[15px] md:text-lg tracking-wide">
-                    LE {currentPrice?.toFixed(2)}
-                  </span>
-                </div>
-                <div className="bg-[#ff0000] text-white text-[11px] md:text-[12px] font-bold px-3 py-1 rounded-md tracking-wider inline-block">
-                  Save LE {savedAmount?.toFixed(2)}
-                </div>
-              </>
-            ) : (
-              <p className="text-[#004b93] font-black text-[15px] md:text-lg tracking-wide">
-                LE {currentPrice?.toFixed(2)}
-              </p>
-            )}
-          </div>
         </div>
 
-        {/* زر الشراء للموبايل */}
-        {!isList && (
-          <div className="flex flex-col lg:hidden mt-auto pt-4 w-full pb-1">
+        {/* النقط تحت الصورة للموبايل (تم نقلها هنا) */}
+        {hasMultipleImages && !isList && (
+          <div className="w-full flex justify-center gap-2 mt-3 mb-1 lg:hidden">
             <button 
-              onClick={handleOpenQuickAdd}
-              className="w-full bg-white border border-gray-200 hover:border-[#004b93] text-[#2d2d2d] hover:text-[#004b93] py-2.5 text-[11px] font-bold tracking-widest flex items-center justify-center gap-1.5 rounded-sm active:scale-95 transition-all shadow-sm"
-            >
-              <ShoppingBag size={14} /> QUICK ADD
-            </button>
+              onClick={(e) => { e.stopPropagation(); setActiveImageIndex(0); }}
+              className={`h-1.5 rounded-full transition-all duration-300 ${activeImageIndex === 0 ? 'bg-[#004b93] w-6' : 'bg-gray-200 hover:bg-gray-300 w-2'}`}
+            />
+            <button 
+              onClick={(e) => { e.stopPropagation(); setActiveImageIndex(1); }}
+              className={`h-1.5 rounded-full transition-all duration-300 ${activeImageIndex === 1 ? 'bg-[#004b93] w-6' : 'bg-gray-200 hover:bg-gray-300 w-2'}`}
+            />
           </div>
         )}
       </div>
 
+      {/* تفاصيل المنتج (الاسم، السعر، والخصم) */}
+      <div className={`mt-3 w-full px-2 flex flex-grow ${isList ? 'flex-col sm:flex-row sm:justify-between sm:items-center' : 'flex-col text-center'}`}>
+        
+        {/* قسم الاسم */}
+        <div className={`flex flex-col gap-1 ${isList ? 'sm:w-1/2 sm:items-start' : 'items-center'}`}>
+          <h3 onClick={goToDetails} className={`text-[#2d2d2d] text-[14px] md:text-[15px] font-bold uppercase tracking-tight hover:text-[#004b93] transition-colors cursor-pointer ${isList ? 'text-center sm:text-left' : 'line-clamp-1 text-center'}`}>
+            {product.name}
+          </h3>
+        </div>
+        
+        {/* قسم السعر */}
+        <div className={`mt-3 sm:mt-0 flex flex-col ${isList ? 'items-center sm:items-end sm:w-1/2' : 'items-center'} justify-center gap-2`}>
+          {isOnSale ? (
+            <>
+              <div className="flex flex-col items-center justify-center gap-2.5">
+                <span className="text-gray-400 font-semibold text-[13px] md:text-[14px] line-through decoration-1">
+                  LE {originalPrice?.toFixed(2)}
+                </span>
+                <span className="text-[#dc2626] font-black text-[15px] md:text-[17px] tracking-wide">
+                  LE {currentPrice?.toFixed(2)}
+                </span>
+              </div>
+              <div className="bg-red-50 text-[#dc2626] text-[11px] font-bold px-2.5 py-1 rounded-md tracking-wider inline-block border border-red-100">
+                Save LE {savedAmount?.toFixed(2)}
+              </div>
+            </>
+          ) : (
+            <p className="text-[#004b93] font-black text-[15px] md:text-[17px] tracking-wide">
+              LE {currentPrice?.toFixed(2)}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* زر الشراء للموبايل (لو مش في وضع الـ List) */}
+      {!isList && (
+        <div className="flex flex-col lg:hidden mt-auto pt-5 w-full pb-1">
+          <button 
+            onClick={handleOpenQuickAdd}
+            className="w-full bg-[#f8f9fa] border border-transparent hover:bg-[#004b93] text-[#2d2d2d] hover:text-white py-3 text-[12px] font-bold tracking-widest flex items-center justify-center gap-2 rounded-xl active:scale-95 transition-all duration-300 shadow-sm hover:shadow-md"
+          >
+            <ShoppingBag size={15} /> QUICK ADD
+          </button>
+        </div>
+      )}
     </div>
   );
 }

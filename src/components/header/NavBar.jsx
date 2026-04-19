@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
-import { FiX, FiChevronDown } from 'react-icons/fi';
+import { FiX, FiChevronDown, FiHeart } from 'react-icons/fi';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../services/supabase';
 
@@ -246,6 +246,21 @@ const NavBar = ({ isMenuOpen, setIsMenuOpen }) => {
                 </div>
               ))}
 
+              {/* ===== زر المفضلة الجديد ===== */}
+              <div className="flex flex-col mt-2">
+                <Link 
+                  to="/wishlist" /* غير المسار ده لو صفحة المفضلة ليها اسم تاني عندك */
+                  onClick={() => setIsMenuOpen(false)}
+                  className="flex items-center gap-3 p-5 cursor-pointer rounded-sm bg-[#fff0f0] text-[#dc2626] hover:bg-[#ffe5e5] transition-all duration-300 border border-red-100"
+                >
+                  <FiHeart size={20} className="text-[#dc2626] drop-shadow-sm" />
+                  <span className="text-[14px] font-black uppercase tracking-widest w-full">
+                    Wishlist
+                  </span>
+                </Link>
+              </div>
+              {/* ============================= */}
+
               {/* Promo Banner (لافتة ترويجية لتعزيز شكل المتاجر العالمية) */}
               <div className="mt-8 border-2 border-[#004b93] p-6 text-center bg-[#f8fbff] rounded-sm">
                 <h4 className="font-black text-[#2d2d2d] text-[16px] tracking-widest uppercase">Sale up to</h4>
@@ -256,7 +271,7 @@ const NavBar = ({ isMenuOpen, setIsMenuOpen }) => {
 
           </div>
         </div>,
-        document.body
+        document.body // تأكد إنك بتعمل render للـ portal بشكل صح
       )}
     </>
   );

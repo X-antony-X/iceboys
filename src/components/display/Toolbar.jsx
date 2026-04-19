@@ -3,7 +3,6 @@ import { LayoutList, LayoutGrid, Grid3X3, Grid2X2, ChevronDown, SortAsc, Layers 
 
 export default function Toolbar({ viewMode, setViewMode }) {
   const views = [
-    { id: 'list', icon: <LayoutList size={16} />, label: 'List' },
     { id: 'grid-2', icon: <LayoutGrid size={16} />, label: 'Grid 2' },
     { id: 'grid-3', icon: <Grid2X2 size={16} />, label: 'Grid 3' },
     { id: 'grid-4', icon: <Grid3X3 size={16} />, label: 'Grid 4' }

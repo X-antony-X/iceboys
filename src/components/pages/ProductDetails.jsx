@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../services/supabase'; // تأكد من مسار الـ supabase
 import { useCart } from '../header/CartProvider'; // تأكد من مسار الـ CartProvider
@@ -11,8 +11,7 @@ import {
   Eye, 
   Truck, 
   ShieldCheck, 
-  RefreshCcw,
-  Ruler
+  RefreshCcw
 } from 'lucide-react';
 
 // دالة جلب بيانات منتج واحد من Supabase
@@ -29,8 +28,8 @@ const fetchProductById = async (id) => {
 
 export default function ProductDetails() {
   const { id } = useParams();
-  const navigate = useNavigate();
   const { addToCart } = useCart();
+  const navigate = useNavigate();
 
   // جلب البيانات باستخدام React Query
   const { data: product, isLoading, isError } = useQuery({
@@ -42,6 +41,17 @@ export default function ProductDetails() {
   const [selectedSize, setSelectedSize] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+
+  // === التعديل هنا: تحديد أول مقاس متاح كافتراضي أول ما المنتج يِحمّل ===
+  useEffect(() => {
+    if (product && product.sizes && !selectedSize) {
+      // بندور على أول مقاس كميته أكبر من 0
+      const firstAvailableSize = product.sizes.find(s => parseInt(s.quantity) > 0);
+      if (firstAvailableSize) {
+        setSelectedSize(firstAvailableSize.size);
+      }
+    }
+  }, [product, selectedSize]);
 
   // دالة لجلب الرابط الصحيح للصورة من Supabase Storage
   const getImageUrl = (path) => {
@@ -69,20 +79,23 @@ export default function ProductDetails() {
     if (quantity > 1) setQuantity(prev => prev - 1);
   };
 
-const handleBuyNow = () => {
+  // === التعديل هنا: دمج وتظبيط دالة Buy Now عشان تبعت الداتا صح للـ Checkout ===
+  const handleBuyNow = () => {
     if (!selectedSize || availableStock === 0) return;
     
-    // توجيه المستخدم لصفحة الدفع مع إرسال بيانات المنتج الحالي
+    const singleProductToBuy = [{
+      cartItemId: `buy-now-${product.id}-${selectedSize}`, 
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.image_urls ? product.image_urls[0] : '', 
+      size: selectedSize, 
+      quantity: quantity 
+    }];
+
     navigate('/checkout', {
       state: {
-        selectedProduct: {
-          id: product.id,
-          name: product.name,
-          size: selectedSize,
-          price: product.price,
-          quantity: quantity,
-          image: mainImage
-        }
+        checkoutItems: singleProductToBuy
       }
     });
   };
@@ -101,12 +114,10 @@ const handleBuyNow = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 bg-white">
-      {/* تقسيم الشاشة لعمودين في الديسكتوب وعمود واحد في الموبايل */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-16">
         
         {/* ================= العمود الأيسر: الصور ================= */}
         <div className="flex flex-col gap-4">
-          {/* الصورة الرئيسية */}
           <div className="relative aspect-[4/5] bg-gray-50 rounded-sm overflow-hidden group">
             <img 
               src={mainImage} 
@@ -114,7 +125,6 @@ const handleBuyNow = () => {
               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
             
-            {/* أسهم التقليب (تظهر لو فيه أكتر من صورة) */}
             {images.length > 1 && (
               <>
                 <button 
@@ -133,7 +143,6 @@ const handleBuyNow = () => {
             )}
           </div>
 
-          {/* الصور المصغرة (Thumbnails) */}
           {images.length > 1 && (
             <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
               {images.map((img, idx) => (
@@ -152,7 +161,6 @@ const handleBuyNow = () => {
 
         {/* ================= العمود الأيمن: تفاصيل المنتج ================= */}
         <div className="flex flex-col">
-          {/* العنوان والسعر */}
           <h1 className="text-2xl sm:text-3xl font-black text-[#2d2d2d] uppercase tracking-tight mb-2">
             {product.name}
           </h1>
@@ -170,7 +178,6 @@ const handleBuyNow = () => {
             <p className="text-sm font-bold text-[#2d2d2d]">Premium Quality | Cash on Delivery</p>
           </div>
 
-          {/* رسالة الكمية المتاحة (Scarcity Message) */}
           {selectedSize && availableStock > 0 && availableStock <= 20 && (
             <p className="text-red-500 font-bold text-sm mb-4 animate-pulse">
               Please hurry! Only {availableStock} left in stock
@@ -179,14 +186,18 @@ const handleBuyNow = () => {
 
           {/* اختيار المقاس */}
           <div className="mb-6">
-            {/* <div className="flex justify-between items-end mb-3">
-              <span className="text-sm font-bold text-[#2d2d2d] uppercase tracking-widest">
-                Size: {selectedSize || ''}
+            
+            {/* === التعديل هنا: إشارة واضحة للمقاس المختار === */}
+            <div className="flex justify-between items-end mb-3">
+              <span className="text-sm font-bold text-[#2d2d2d] uppercase tracking-widest flex items-center gap-2">
+                Size: 
+                {selectedSize ? (
+                  <span className="text-[#004b93] bg-blue-50 px-2 py-0.5 rounded-sm">{selectedSize}</span>
+                ) : (
+                  <span className="text-red-500 text-xs normal-case tracking-normal"> (Please select a size)</span>
+                )}
               </span>
-              <button className="text-xs font-bold text-gray-500 hover:text-[#004b93] flex items-center gap-1 uppercase tracking-widest underline underline-offset-4">
-                <Ruler size={14} /> Size Guide
-              </button>
-            </div> */}
+            </div>
             
             <div className="flex flex-wrap gap-3">
               {product.sizes?.map((item) => {
@@ -200,7 +211,7 @@ const handleBuyNow = () => {
                     onClick={() => setSelectedSize(item.size)}
                     className={`w-14 h-12 flex items-center justify-center text-sm font-bold uppercase transition-all border ${
                       selectedSize === item.size 
-                        ? 'border-[#2d2d2d] bg-[#2d2d2d] text-white shadow-md' 
+                        ? 'border-[#2d2d2d] bg-[#2d2d2d] text-white shadow-md scale-105' // كبّرنا الزرار شوية وقت الاختيار للوضوح
                         : isOutOfStock 
                           ? 'border-gray-200 bg-gray-50 text-gray-300 cursor-not-allowed line-through relative overflow-hidden' 
                           : 'border-gray-300 bg-white text-[#2d2d2d] hover:border-[#2d2d2d]'
@@ -212,43 +223,38 @@ const handleBuyNow = () => {
               })}
             </div>
 
-{/* مؤشر الكمية المتاحة (Inventory Progress Bar) */}
-{selectedSize && (
-  <div className="mt-6 mb-6">
-    <div className="flex justify-between items-center mb-2">
-      <p className="text-[11px] font-black uppercase tracking-widest text-[#2d2d2d]">
-        {availableStock > 0 ? (
-          <>Only <span className="text-red-600">{availableStock}</span> left in stock</>
-        ) : (
-          <span className="text-red-600">Out of Stock</span>
-        )}
-      </p>
-    </div>
-    <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
-      <div 
-        className={`h-full transition-all duration-1000 ease-out ${
-          availableStock <= 5 ? 'bg-red-500' : availableStock <= 20 ? 'bg-orange-400' : 'bg-green-600'
-        }`}
-        style={{ 
-          // بنفترض هنا إن أقصى كمية للعرض في الشريط هي 50 قطعة مثلاً كنسبة مئوية
-          width: `${Math.min((availableStock / 50) * 100, 100)}%` 
-        }}
-      />
-    </div>
-  </div>
-)}
+            {selectedSize && (
+              <div className="mt-6 mb-6">
+                <div className="flex justify-between items-center mb-2">
+                  <p className="text-[11px] font-black uppercase tracking-widest text-[#2d2d2d]">
+                    {availableStock > 0 ? (
+                      <>Only <span className="text-red-600">{availableStock}</span> left in stock</>
+                    ) : (
+                      <span className="text-red-600">Out of Stock</span>
+                    )}
+                  </p>
+                </div>
+                <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
+                  <div 
+                    className={`h-full transition-all duration-1000 ease-out ${
+                      availableStock <= 5 ? 'bg-red-500' : availableStock <= 20 ? 'bg-orange-400' : 'bg-green-600'
+                    }`}
+                    style={{ 
+                      width: `${Math.min((availableStock / 50) * 100, 100)}%` 
+                    }}
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* الإجمالي الفرعي (Subtotal) */}
           <div className="mb-6">
             <p className="text-sm font-bold text-gray-500 uppercase tracking-widest">
               Subtotal: <span className="text-[#2d2d2d]">LE {(product.price * quantity).toFixed(2)}</span>
             </p>
           </div>
 
-          {/* التحكم في الكمية والزرار */}
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
-            {/* Quantity Selector */}
             <div className="flex items-center border border-gray-300 h-14 w-full sm:w-32">
               <button onClick={handleDecrease} className="w-10 h-full flex items-center justify-center text-gray-500 hover:text-[#2d2d2d] hover:bg-gray-50 transition-colors">
                 <Minus size={16} />
@@ -260,29 +266,25 @@ const handleBuyNow = () => {
                 <Plus size={16} />
               </button>
             </div>
-
           </div>
 
-          {/* Buy It Now Button */}
           <button 
             onClick={handleBuyNow}
             disabled={!selectedSize || availableStock === 0}
             className={`w-full h-14 font-black text-xs uppercase tracking-[0.2em] border-2 transition-all flex items-center justify-center mb-8 ${
               selectedSize && availableStock > 0
-                ? 'border-[#2d2d2d] bg-white text-[#2d2d2d] hover:bg-gray-50'
+                ? 'border-[#2d2d2d] bg-white text-[#2d2d2d] hover:bg-gray-50 hover:shadow-lg' // ضفت shadow خفيف وقت الـ hover
                 : 'border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed'
             }`}
           >
             Buy It Now
           </button>
 
-          {/* عداد المشاهدات الوهمي (زي الفيديو) */}
           <div className="flex items-center gap-2 text-sm text-gray-600 mb-8 border-b border-gray-100 pb-6">
             <Eye size={18} className="text-gray-400" />
             <p><span className="font-bold text-[#2d2d2d]">{Math.floor(Math.random() * 50) + 20}</span> customers are viewing this product</p>
           </div>
 
-          {/* معلومات إضافية (Accordions / Features) */}
           <div className="flex flex-col gap-5">
             <div className="flex gap-4 items-start group cursor-pointer">
               <Truck size={24} strokeWidth={1.5} className="text-[#004b93] mt-1 group-hover:scale-110 transition-transform" />
@@ -309,7 +311,6 @@ const handleBuyNow = () => {
             </div>
           </div>
 
-          {/* الوصف (Description) - لو حابب تعرضه */}
           {product.description && (
             <div className="mt-8 pt-8 border-t border-gray-100">
               <h3 className="font-black text-[#2d2d2d] uppercase tracking-widest mb-4">Product Description</h3>
