@@ -16,6 +16,7 @@ import ProductDetails from './components/pages/ProductDetails';
 import Collections from './components/pages/Colletions';
 import CollectionProducts from './components/pages/CollectionProducts';
 import Checkout from './components/pages/Checkout';
+import ScrollToTop from './components/pages/ScrollToTop';
 
 // admin
 import Add from './admin/components/Add'
@@ -27,6 +28,7 @@ import AdminHeroForm from './admin/components/AdminHeroForm';
 function App() {
   return (
     <Router>
+      <ScrollToTop />
       <Header />
       <Routes>
         <Route path="/" element={<Home />} />
