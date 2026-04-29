@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react'; // أضفنا useEffect
 import { Mail, Lock, User, Phone, MapPin, Loader2, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '../../services/supabase';
 import { useNavigate } from 'react-router-dom';
@@ -19,40 +19,83 @@ export default function SignInPage() {
     password: '',
   });
 
+  // --- التعديل: مراقبة حالة الدخول (خاصة لـ Google Login) ---
+  useEffect(() => {
+    const checkUserAndRedirect = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session?.user) {
+        // جلب الصلاحية من جدول profiles
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .single();
+
+        if (profile?.role === 'admin') {
+          navigate('/admin-home'); // التوجه لصفحة الأدمن الرئيسية
+        } else {
+          navigate('/account');
+        }
+      }
+    };
+
+    // الاستماع لأي تغيير في حالة الـ Auth (مثل العودة من Google)
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        checkUserAndRedirect();
+      }
+    });
+
+    return () => authListener.subscription.unsubscribe();
+  }, [navigate]);
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     setErrorMessage('');
   };
 
-  // 1. Mutation لتسجيل الدخول
+  // 1. Mutation لتسجيل الدخول اليدوي (Email/Password)
   const loginMutation = useMutation({
     mutationFn: async ({ email, password }) => {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) throw new Error(error.message);
-      return data;
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password });
+      if (authError) throw new Error(authError.message);
+      
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', authData.user.id)
+        .single();
+
+      return { ...authData, role: profile?.role || 'user' };
     },
-    onSuccess: () => navigate('/account'),
+    onSuccess: (data) => {
+      // --- التعديل: توجيه الأدمن لـ admin-home ---
+      if (data.role === 'admin') {
+        navigate('/admin-home'); 
+      } else {
+        navigate('/account');
+      }
+    },
     onError: (error) => setErrorMessage(error.message)
   });
 
-  // 2. Mutation لإنشاء حساب + إضافة البيانات لجدول profiles
+  // 2. Mutation لإنشاء حساب
   const signupMutation = useMutation({
     mutationFn: async (userData) => {
-      // أ- إنشاء اليوزر مع إضافة الـ display_name في الـ Metadata
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: userData.email,
         password: userData.password,
         options: {
           data: {
-            first_name: userData.firstName, // ده اللي بيظهر في الـ User Metadata
-            full_name: `${userData.firstName} ${userData.lastName}` // ده اللي بيسمع في الـ Display Name أحياناً
+            first_name: userData.firstName,
+            full_name: `${userData.firstName} ${userData.lastName}`
           }
         }
       });
 
       if (authError) throw new Error(authError.message);
 
-      // ب- إضافة البيانات لجدول الـ profiles (تأكد أن الـ RLS مفتوح كما في الخطوة الأولى)
       if (authData.user) {
         const { error: profileError } = await supabase
           .from('profiles')
@@ -64,14 +107,11 @@ export default function SignInPage() {
               phone: userData.phone,
               address: userData.address,
               email: userData.email,
+              role: 'user'
             },
           ]);
 
-        if (profileError) {
-          // لو حصل مشكلة في جدول البروفايل، يفضل نمسح اليوزر اللي اتكريه عشان ميعلقش
-          console.error("Profile Error:", profileError.message);
-          throw new Error("حدث خطأ أثناء حفظ بيانات البروفايل: " + profileError.message);
-        }
+        if (profileError) throw new Error("حدث خطأ أثناء حفظ بيانات البروفايل: " + profileError.message);
       }
       return authData;
     },
@@ -80,7 +120,12 @@ export default function SignInPage() {
   });
 
   const handleGoogleLogin = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({ provider: 'google' });
+    const { error } = await supabase.auth.signInWithOAuth({ 
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin + '/signin' // العودة لنفس الصفحة لمعالجة التوجيه في useEffect
+      }
+    });
     if (error) setErrorMessage(error.message);
   };
 
@@ -178,7 +223,6 @@ export default function SignInPage() {
               autoComplete="new-password"
               className="w-full pl-10 pr-12 py-2.5 bg-gray-50 border border-gray-200 rounded-sm focus:outline-none focus:border-[#004b93] text-sm" 
             />
-            {/* زرار العين ثابت وموجود دايماً */}
             <button 
               type="button"
               onClick={() => setShowPassword(!showPassword)}
